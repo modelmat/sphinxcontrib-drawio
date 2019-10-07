@@ -1,0 +1,6 @@
+# Editor Files
+.idea/*
+
+# Build / Compile Files
+__pycache__/
+build/
