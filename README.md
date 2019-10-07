@@ -19,3 +19,4 @@ drawio_default_image_format = "png"
     :alt: An Example
     :align: center
 ```
+If any other of the `draw.io` CLI tool's options are wanted, please file an issue.
