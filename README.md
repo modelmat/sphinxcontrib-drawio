@@ -5,7 +5,13 @@ Sphinx Extension to add the ``drawio`` directive to include draw.io diagrams.
 
 ## Installation
 
-``python3 -m pip install sphinxcontrib-drawio``
+1. ``python3 -m pip install sphinxcontrib-drawio``
+2. In your sphinx config:
+```python
+extensions = [
+    "sphinxcontrib.drawio"
+]
+```
 
 ## Options
 ```
