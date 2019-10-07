@@ -89,10 +89,10 @@ def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
 
     drawio_args = [
         "draw.io.exe",
-        "-x",
-        "-f",
+        "--export",
+        "--format",
         output_format,
-        "-o",
+        "--output",
         out_file_path,
         in_filename,
     ]
