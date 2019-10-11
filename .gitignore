@@ -4,3 +4,5 @@
 # Build / Compile Files
 __pycache__/
 build/
+dist/
+sphinxcontrib_drawio.egg-info/
