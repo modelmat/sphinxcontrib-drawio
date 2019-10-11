@@ -105,7 +105,6 @@ def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
         ret = subprocess.run(drawio_args, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, cwd=cwd, check=True)
         if not os.path.isfile(out_file_path):
-            print(ret.args)
             raise DrawIOError("draw.io did not produce an output file:"
                               "\n[stderr]\n{}\n[stdout]\n{}"
                               .format(ret.stderr, ret.stdout))
