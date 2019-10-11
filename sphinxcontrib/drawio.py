@@ -1,4 +1,5 @@
 import os.path
+import platform
 import posixpath
 import subprocess
 from hashlib import sha1
@@ -88,7 +89,7 @@ def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
     ensuredir(os.path.dirname(out_file_path))
 
     drawio_args = [
-        "draw.io.exe",
+        "draw.io.exe" if platform.system() == "Windows" else "drawio",
         "--export",
         "--format",
         output_format,

@@ -12,6 +12,8 @@ extensions = [
     "sphinxcontrib.drawio"
 ]
 ```
+3. Add the binary to $PATH. For Windows add `C:\Program Files\draw.io` and on
+Linux add `/opt/draw.io/`. 
 
 ## Options
 ```
