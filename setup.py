@@ -5,7 +5,7 @@ import setuptools
 # This will fail if something happens or if not in a git repository.
 # This is intentional.
 ret = subprocess.run("git describe --tags --abbrev=0", stdout=subprocess.PIPE,
-                     stderr=subprocess.PIPE, check=True)
+                     stderr=subprocess.PIPE, check=True, shell=True)
 version = ret.stdout.decode("utf-8").strip()
 
 with open("README.md", "r") as fh:
