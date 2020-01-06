@@ -6,3 +6,5 @@ __pycache__/
 build/
 dist/
 sphinxcontrib_drawio.egg-info/
+
+venv/
