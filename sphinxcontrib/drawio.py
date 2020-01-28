@@ -76,7 +76,7 @@ class DrawIO(SphinxDirective):
 def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
                   output_format: str) -> str:
     """Render drawio file into an output image file."""
-    hash_key = "".join(node.attributes).encode()
+    hash_key = "".join(node.attributes['filename']).encode()
     filename = "drawio-{}.{}".format(sha1(hash_key).hexdigest(),
                                      output_format)
     file_path = posixpath.join(self.builder.imgpath, filename)
