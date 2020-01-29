@@ -27,5 +27,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Framework :: Sphinx :: Extension",
     ],
-    python_requires='>=3.4',
+    python_requires='>=3.6',
 )
