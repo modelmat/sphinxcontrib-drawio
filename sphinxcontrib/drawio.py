@@ -97,6 +97,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
 
     drawio_args = [
         binary_path,
+        "--no-sandbox",
         "--export",
         "--format",
         output_format,
