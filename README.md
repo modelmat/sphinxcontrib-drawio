@@ -16,8 +16,11 @@ extensions = [
 Linux add `/opt/draw.io/`. 
 
 ## Options
-```
-drawio_default_image_format = "png"
+Both of these are optional.
+
+```python
+drawio_output_format = "png"
+drawio_binary_path = "/path/to/draw.io-binary"
 ```
 
 ## Usage

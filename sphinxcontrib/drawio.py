@@ -88,8 +88,15 @@ def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
 
     ensuredir(os.path.dirname(out_file_path))
 
+    if self.builder.config.drawio_binary_path:
+        binary_path = self.builder.config.drawio_binary_path
+    elif platform.system() == "Windows":
+        binary_path = "C:\Program Files\draw.io\draw.io.exe"
+    else:
+        binary_path = "/opt/draw.io/drawio"
+
     drawio_args = [
-        "draw.io.exe" if platform.system() == "Windows" else "drawio",
+        binary_path,
         "--export",
         "--format",
         output_format,
@@ -164,11 +171,11 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_node(drawio, html=(render_drawio_html, None))
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html")
+    app.add_config_value("drawio_binary_path", None, "html")
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
     app.add_css_file("drawio.css")
 
-    return {"version": sphinx.__display_version__}
     # TODO: Check for parallel read and write safe
-
+    return {"version": sphinx.__display_version__}
