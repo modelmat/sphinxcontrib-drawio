@@ -30,7 +30,7 @@ def align_spec(argument: Any) -> str:
 
 
 # noinspection PyPep8Naming
-class drawio(nodes.General, nodes.Inline, nodes.Element):
+class DrawIONode(nodes.General, nodes.Inline, nodes.Element):
     pass
 
 
@@ -60,7 +60,7 @@ class DrawIO(SphinxDirective):
                 line=self.lineno,
             )]
 
-        node = drawio()
+        node = DrawIONode()
         node["filename"] = filename
         if "alt" in self.options:
             node["alt"] = self.options["alt"]
@@ -73,10 +73,10 @@ class DrawIO(SphinxDirective):
         return [node]
 
 
-def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
+def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
                   output_format: str) -> str:
     """Render drawio file into an output image file."""
-    hash_key = "".join(node.attributes).encode()
+    hash_key = "".join(node.attlist()).encode()
     filename = "drawio-{}.{}".format(sha1(hash_key).hexdigest(),
                                      output_format)
     file_path = posixpath.join(self.builder.imgpath, filename)
@@ -125,7 +125,7 @@ def render_drawio(self: SphinxTranslator, node: drawio, in_filename: str,
                                                   exc.stderr, exc.stdout))
 
 
-def render_drawio_html(self: HTMLTranslator, node: drawio) -> None:
+def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     output_format = self.builder.config.drawio_output_format
     filename = node["filename"]
     try:
@@ -168,7 +168,7 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
-    app.add_node(drawio, html=(render_drawio_html, None))
+    app.add_node(DrawIONode, html=(render_drawio_html, None))
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html")
     app.add_config_value("drawio_binary_path", None, "html")
