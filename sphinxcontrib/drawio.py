@@ -76,10 +76,16 @@ class DrawIO(SphinxDirective):
 def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
                   output_format: str) -> str:
     """Render drawio file into an output image file."""
-    node_attr = dict((y, x) for x, y in node.attlist())
-    hash_key = "".join(node_attr).encode()
-    filename = "drawio-{}.{}".format(sha1(hash_key).hexdigest(),
-                                     output_format)
+
+    # Any directive options which would change the output file would go here
+    unique_values = (
+        # This ensures that the same file hash is generated no matter the build directory
+        # Mainly useful for pytest, as it creates a new build directory every time
+        node["filename"].replace(self.builder.srcdir, ""),
+    )
+    hash_key = "\n".join(unique_values)
+    sha_key = sha1(hash_key.encode()).hexdigest()
+    filename = "drawio-{}.{}".format(sha_key, output_format)
     file_path = posixpath.join(self.builder.imgpath, filename)
     out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir,
                                  filename)
