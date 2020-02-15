@@ -1,0 +1,2 @@
+beautifulsoup4==4.8.2
+pytest==5.3.5
