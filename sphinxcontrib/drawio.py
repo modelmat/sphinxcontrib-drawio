@@ -113,6 +113,10 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         in_filename,
     ]
 
+    if self.builder.config.drawio_headless:
+        # This can only be added if true, an empty string is bad
+        drawio_args.insert(0, "xvfb-run")
+
     doc_name = node.get("doc_name", "index")
     cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
 
@@ -180,6 +184,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html")
     app.add_config_value("drawio_binary_path", None, "html")
+    app.add_config_value("drawio_headless", True, "html")
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
