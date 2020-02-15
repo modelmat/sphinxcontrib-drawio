@@ -98,7 +98,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     if self.builder.config.drawio_binary_path:
         binary_path = self.builder.config.drawio_binary_path
     elif platform.system() == "Windows":
-        binary_path = "C:\Program Files\draw.io\draw.io.exe"
+        binary_path = r"C:\Program Files\draw.io\draw.io.exe"
     else:
         binary_path = "/opt/draw.io/drawio"
 
