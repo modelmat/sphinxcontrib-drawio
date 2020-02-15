@@ -1,22 +1,17 @@
 version: 2.1
 workflows:
-  build_and_deploy:
+  test_and_deploy:
     jobs:
-      - build:
-          filters:
-            tags:
-              only: /.*/
-      - test-python-install:
+      - test:
+          name: "Test 3.6"
           version: "3.6"
-          requires:
-            - build
-      - test-python-install:
+      - test:
+          name: "Test 3.7"
           version: "3.7"
-          requires:
-            - build
       - deploy:
           requires:
-            - build
+            - "Test 3.6"
+            - "Test 3.7"
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)*/
@@ -24,24 +19,7 @@ workflows:
               ignore: /.*/
 
 jobs:
-  build:
-    docker:
-      - image: circleci/python:3.7
-    steps:
-      - checkout
-      - restore_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}
-      - run:
-          name: Install Python Dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-      - save_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}
-          paths:
-            - "venv"
-  test-python-install:
+  test:
     parameters:
       version:
         type: string
@@ -56,11 +34,21 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+            pip install -r dev-requirements.txt
+            pip install .
+
       - run:
-          name: Test Install
+          name: Install draw.io
+          command : |
+            wget -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v12.6.5/draw.io-amd64-12.6.5.deb
+            sudo apt install libasound2 xvfb ./drawio.deb
+
+      - run:
+          name: Run Tests
           command: |
-            python --version
-            sudo pip3 install sphinxcontrib-drawio
+            . venv/bin/activate
+            python -m pytest -vv
+
   deploy:
     docker:
       - image: circleci/python:3.7
