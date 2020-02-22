@@ -29,6 +29,10 @@ def align_spec(argument: Any) -> str:
     return directives.choice(argument, ("left", "center", "right"))
 
 
+def format_spec(argument: Any) -> str:
+    return directives.choice(argument, VALID_OUTPUT_FORMATS)
+
+
 # noinspection PyPep8Naming
 class DrawIONode(nodes.General, nodes.Inline, nodes.Element):
     pass
@@ -40,8 +44,11 @@ class DrawIO(SphinxDirective):
     optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {
-        "alt"  : directives.unchanged,
+        "alt": directives.unchanged,
         "align": align_spec,
+        "format": format_spec,
+        "width": directives.unchanged,
+        "height": directives.unchanged,
     }
 
     def run(self) -> List[Node]:
@@ -66,6 +73,12 @@ class DrawIO(SphinxDirective):
             node["alt"] = self.options["alt"]
         if "align" in self.options:
             node["align"] = self.options["align"]
+        if "format" in self.options:
+            node["format"] = self.options["format"]
+        if "width" in self.options:
+            node["width"] = self.options["width"]
+        if "height" in self.options:
+            node["height"] = self.options["height"]
 
         node["doc_name"] = self.env.docname
 
@@ -74,7 +87,7 @@ class DrawIO(SphinxDirective):
 
 
 def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
-                  output_format: str) -> str:
+                  default_output_format: str) -> str:
     """Render drawio file into an output image file."""
 
     # Any directive options which would change the output file would go here
@@ -83,6 +96,12 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         # Mainly useful for pytest, as it creates a new build directory every time
         node["filename"].replace(self.builder.srcdir, ""),
     )
+
+    if "format" in node:
+        output_format = node["format"]
+    else:
+        output_format = default_output_format
+
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
     filename = "drawio-{}.{}".format(sha_key, output_format)
@@ -138,7 +157,11 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
 
 
 def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
-    output_format = self.builder.config.drawio_output_format
+    if "format" in node:
+        output_format = node["format"]
+    else:
+        output_format = self.builder.config.drawio_output_format
+
     filename = node["filename"]
     try:
         if output_format not in VALID_OUTPUT_FORMATS:
@@ -154,16 +177,27 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     if "align" in node:
         self.body.append('<div align="{0}" class="align-{0}">'.format(node["align"]))
 
+    styles = []
+    if "width" in node:
+        styles.append('width:{};'.format(node["width"]))
+    if "height" in node:
+        styles.append('height:{};'.format(node["height"]))
+
+    if len(styles) >= 1:
+        style = ' style="{}"'.format(''.join(styles))
+    else:
+        style = ''
+
     if output_format == "svg":
         self.body.append('<div class="drawio">')
         self.body.append('<object data="{}" type="image/svg+xml"'
-                         'class="drawio">\n'.format(file_path))
+                         'class="drawio"{}>\n'.format(file_path, style))
         self.body.append('<p class="warning">{}</p>'.format(alt))
         self.body.append('</object></div>\n')
     else:
         self.body.append('<div class="drawio">')
-        self.body.append('<img src="{}" alt="{}" class="drawio" />'
-                         .format(file_path, alt))
+        self.body.append('<img src="{}" alt="{}" class="drawio"{} />'
+                         .format(file_path, alt, style))
 
     if "align" in node:
         self.body.append('</div>\n')
