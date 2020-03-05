@@ -21,20 +21,15 @@ def _set_localconf(app):
     """
 
     local_conf_path = os.path.join(
-        os.path.dirname(__file__),
-        'roots',
-        'test-root',
+        app.srcdir,
         'localconf.json',
     )
 
     try:
-        pass
         with open(local_conf_path, 'r') as f:
-            d = f.read()
-            conf = json.loads(d)
+            conf = json.load(f)
             for key, value in conf.items():
                 app.config[key] = value
-                # setattr(app.config, key, value)
 
     except FileNotFoundError:
         pass
