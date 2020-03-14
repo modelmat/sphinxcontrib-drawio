@@ -179,11 +179,11 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
 
     styles = []
     if "width" in node:
-        styles.append('width:{};'.format(node["width"]))
+        styles.append("width:{};".format(node["width"]))
     if "height" in node:
-        styles.append('height:{};'.format(node["height"]))
+        styles.append("height:{};".format(node["height"]))
 
-    if len(styles) >= 1:
+    if styles:
         style = ' style="{}"'.format(''.join(styles))
     else:
         style = ''
