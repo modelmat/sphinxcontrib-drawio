@@ -164,6 +164,7 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
         self.body.append('<div class="drawio">')
         self.body.append('<img src="{}" alt="{}" class="drawio" />'
                          .format(file_path, alt))
+        self.body.append('</div>')
 
     if "align" in node:
         self.body.append('</div>\n')
