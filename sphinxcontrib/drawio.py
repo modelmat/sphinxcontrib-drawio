@@ -191,5 +191,4 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.connect("build-finished", on_build_finished)
     app.add_css_file("drawio.css")
 
-    # TODO: Check for parallel read and write safe
-    return {"version": sphinx.__display_version__}
+    return {"parallel_read_safe": True}
