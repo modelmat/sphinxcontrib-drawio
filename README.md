@@ -19,7 +19,7 @@ extensions = [
 ```
 3. Add the binary to `$PATH`. For Windows add `C:\Program Files\draw.io` and on
 Linux add `/opt/draw.io/`. 
-4. (required by default, see below) `sudo apt install xvfb`
+4. (required for `drawio_headless`) `sudo apt install xvfb`
 
 ## Options
 These are the available options and their default values.
