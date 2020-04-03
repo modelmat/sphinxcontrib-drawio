@@ -8,3 +8,6 @@ dist/
 sphinxcontrib_drawio.egg-info/
 
 venv/
+
+# Local user config for tests
+tests/local_user_config.json
