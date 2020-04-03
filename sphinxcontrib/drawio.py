@@ -184,7 +184,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html")
     app.add_config_value("drawio_binary_path", None, "html")
-    app.add_config_value("drawio_headless", True, "html")
+    app.add_config_value("drawio_headless", False, "html")
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
