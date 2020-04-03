@@ -124,6 +124,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     if self.builder.config.drawio_headless:
         # This can only be added if true, an empty string is bad
         drawio_args.insert(0, "xvfb-run")
+        drawio_args.insert(1, "--auto-servernum")
 
     doc_name = node.get("doc_name", "index")
     cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
