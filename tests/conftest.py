@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 from bs4 import BeautifulSoup
 from sphinx.application import Sphinx
-
 from sphinx.testing.path import path
 
 pytest_plugins = "sphinx.testing.fixtures"
@@ -78,3 +77,9 @@ def page(content: Sphinx, request) -> BeautifulSoup:
     c = (content.outdir / page_name).text()
 
     yield BeautifulSoup(c, "html.parser")
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "sphinx"
+    )
