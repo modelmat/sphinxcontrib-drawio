@@ -40,8 +40,9 @@ class DrawIO(SphinxDirective):
     optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {
-        "alt"  : directives.unchanged,
+        "alt": directives.unchanged,
         "align": align_spec,
+        "page-index": directives.nonnegative_int,
     }
 
     def run(self) -> List[Node]:
@@ -66,6 +67,8 @@ class DrawIO(SphinxDirective):
             node["alt"] = self.options["alt"]
         if "align" in self.options:
             node["align"] = self.options["align"]
+        if "page-index" in self.options:
+            node["page-index"] = self.options["page-index"]
 
         node["doc_name"] = self.env.docname
 
@@ -77,11 +80,14 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
                   output_format: str) -> str:
     """Render drawio file into an output image file."""
 
+    page_index = str(node.get("page-index", 0))
+
     # Any directive options which would change the output file would go here
     unique_values = (
         # This ensures that the same file hash is generated no matter the build directory
         # Mainly useful for pytest, as it creates a new build directory every time
         node["filename"].replace(self.builder.srcdir, ""),
+        page_index,
     )
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
@@ -106,6 +112,8 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         binary_path,
         "--no-sandbox",
         "--export",
+        "--page-index",
+        page_index,
         "--format",
         output_format,
         "--output",
