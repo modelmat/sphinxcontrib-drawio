@@ -36,5 +36,6 @@ drawio_headless = False
     :format: png
     :alt: An Example
     :align: center
+    :page-index: 0
 ```
 If any other of the `draw.io` CLI tool's options are wanted, please file an issue.
