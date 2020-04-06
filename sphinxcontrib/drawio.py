@@ -18,8 +18,6 @@ from sphinx.writers.html import HTMLTranslator
 
 logger = logging.getLogger(__name__)
 
-xvfb_pid = "none"
-
 VALID_OUTPUT_FORMATS = ("png", "jpg", "svg")
 
 
@@ -123,7 +121,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         in_filename,
     ]
 
-    if self.builder.config.drawio_headless and os.environ.get("XVGB_PID") != "none":
+    if self.builder.config.drawio_headless and os.environ.get("XVGB_PID") != "":
         # This can only be added if true, an empty string is bad
         subprocess.run\
             (["Xvfb", ":1", "-screen", "0", "1280x768x16", "&", "export", "XVFB_PID=$!", "&&", "export", "DISPLAY=:1"])
@@ -189,7 +187,7 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         src = os.path.join(this_file_path, "drawio.css")
         dst = os.path.join(app.outdir, "_static")
         copy_asset(src, dst)
-    if os.environ.get("XVGB_PID") != "none":
+    if os.environ.get("XVGB_PID") != "":
         subprocess.run("kill", os.environ.get("XVGB_PID"))
 
 
