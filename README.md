@@ -21,6 +21,7 @@ extensions = [
 ```
 3. Add the binary to `$PATH`. For Windows add `C:\Program Files\draw.io` and on
 Linux add `/opt/draw.io/`. 
+4. (if running headless), `sudo apt install xvfb`
 
 ## Options
 These values are placed in the `conf.py` of your sphinx project.
