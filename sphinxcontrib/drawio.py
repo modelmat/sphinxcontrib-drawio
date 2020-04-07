@@ -23,8 +23,11 @@ X_DISPLAY_NUMBER = 1
 
 
 def is_headless(config: Config):
-    if isinstance(config.drawio_headless, str) \
-            and config.drawio_headless.lower() == "auto":
+    if config.drawio_headless == "auto":
+        if platform.system() == "Windows":
+            # Xvfb can never run on windows
+            return False
+
         # DISPLAY will exist if an X-server is running.
         if os.getenv("DISPLAY"):
             return False
