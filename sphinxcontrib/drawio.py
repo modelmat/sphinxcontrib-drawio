@@ -9,7 +9,7 @@ from docutils import nodes
 from docutils.nodes import Node
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
-from sphinx.config import Config
+from sphinx.config import Config, ENUM
 from sphinx.errors import SphinxError
 from sphinx.util import logging, ensuredir
 from sphinx.util.docutils import SphinxDirective, SphinxTranslator
@@ -33,10 +33,8 @@ def is_headless(config: Config):
 
     elif isinstance(config.drawio_headless, bool):
         return config.drawio_headless
-    else:
-        # TODO: properly error before this point
-        # also ensure that it only happens on Linux?
-        raise
+
+    # We should never reach this point as Sphinx ensures the config options
 
 
 class DrawIOError(SphinxError):
@@ -167,10 +165,6 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     output_format = self.builder.config.drawio_output_format
     filename = node["filename"]
     try:
-        if output_format not in VALID_OUTPUT_FORMATS:
-            raise DrawIOError("drawio_output_format must be one of {}, but is {}"
-                              .format(", ".join(VALID_OUTPUT_FORMATS),
-                                      output_format))
         file_path = render_drawio(self, node, filename, output_format)
     except DrawIOError as e:
         logger.warning("drawio filename: {}: {}".format(filename, e))
@@ -232,9 +226,10 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
 def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_node(DrawIONode, html=(render_drawio_html, None))
     app.add_directive("drawio", DrawIO)
-    app.add_config_value("drawio_output_format", "png", "html")
+    app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
-    app.add_config_value("drawio_headless", "auto", "html")
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
