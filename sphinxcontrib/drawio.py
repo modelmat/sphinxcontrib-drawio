@@ -24,8 +24,8 @@ X_DISPLAY_NUMBER = 1
 
 def is_headless(config: Config):
     if config.drawio_headless == "auto":
-        if platform.system() == "Windows":
-            # Xvfb can never run on windows
+        if platform.system() != "Linux":
+            # Xvfb can only run on Linux
             return False
 
         # DISPLAY will exist if an X-server is running.
