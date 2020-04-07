@@ -29,6 +29,10 @@ def align_spec(argument: Any) -> str:
     return directives.choice(argument, ("left", "center", "right"))
 
 
+def format_spec(argument: Any) -> str:
+    return directives.choice(argument, VALID_OUTPUT_FORMATS)
+
+
 # noinspection PyPep8Naming
 class DrawIONode(nodes.General, nodes.Inline, nodes.Element):
     pass
@@ -40,10 +44,14 @@ class DrawIO(SphinxDirective):
     optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {
-        "alt": directives.unchanged,
         "align": align_spec,
+        "alt": directives.unchanged,
+        "format": format_spec,
+        "height": directives.positive_int,
         "page-index": directives.nonnegative_int,
+        "width": directives.positive_int,
     }
+    optional_uniques = ("height", "width")
 
     def run(self) -> List[Node]:
         if self.arguments:
@@ -63,13 +71,7 @@ class DrawIO(SphinxDirective):
 
         node = DrawIONode()
         node["filename"] = filename
-        if "alt" in self.options:
-            node["alt"] = self.options["alt"]
-        if "align" in self.options:
-            node["align"] = self.options["align"]
-        if "page-index" in self.options:
-            node["page-index"] = self.options["page-index"]
-
+        node["config"] = self.options
         node["doc_name"] = self.env.docname
 
         self.add_name(node)
@@ -77,10 +79,11 @@ class DrawIO(SphinxDirective):
 
 
 def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
-                  output_format: str) -> str:
+                  default_output_format: str) -> str:
     """Render drawio file into an output image file."""
 
-    page_index = str(node.get("page-index", 0))
+    page_index = str(node["config"].get("page-index", 0))
+    output_format = node["config"].get("format") or default_output_format
 
     # Any directive options which would change the output file would go here
     unique_values = (
@@ -88,10 +91,12 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         # Mainly useful for pytest, as it creates a new build directory every time
         node["filename"].replace(self.builder.srcdir, ""),
         page_index,
+        output_format,
+        *[str(node["config"].get(option)) for option in DrawIO.optional_uniques]
     )
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
-    filename = "drawio-{}.{}".format(sha_key, output_format)
+    filename = "drawio-{}.{}".format(sha_key, default_output_format)
     file_path = posixpath.join(self.builder.imgpath, filename)
     out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir,
                                  filename)
@@ -108,12 +113,20 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     else:
         binary_path = "/opt/draw.io/drawio"
 
+    extra_args = []
+    for option in DrawIO.optional_uniques:
+        if option in node["config"]:
+            value = node["config"][option]
+            extra_args.append("--{}".format(option))
+            extra_args.append(str(value))
+
     drawio_args = [
         binary_path,
         "--no-sandbox",
         "--export",
         "--page-index",
         page_index,
+        *extra_args,
         "--format",
         output_format,
         "--output",
@@ -159,9 +172,9 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
         logger.warning("drawio filename: {}: {}".format(filename, e))
         raise nodes.SkipNode
 
-    alt = node.get("alt", file_path)
-    if "align" in node:
-        self.body.append('<div align="{0}" class="align-{0}">'.format(node["align"]))
+    alt = node["config"].get("alt", file_path)
+    if "align" in node["config"]:
+        self.body.append('<div align="{0}" class="align-{0}">'.format(node["config"]["align"]))
 
     if output_format == "svg":
         self.body.append('<div class="drawio">')
@@ -175,7 +188,7 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
                          .format(file_path, alt))
         self.body.append('</div>')
 
-    if "align" in node:
+    if "align" in node["config"]:
         self.body.append('</div>\n')
 
     raise nodes.SkipNode
