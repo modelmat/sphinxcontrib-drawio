@@ -5,11 +5,11 @@ import subprocess
 from hashlib import sha1
 from typing import Dict, Any, List
 
-import sphinx
 from docutils import nodes
 from docutils.nodes import Node
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
+from sphinx.config import Config, ENUM
 from sphinx.errors import SphinxError
 from sphinx.util import logging, ensuredir
 from sphinx.util.docutils import SphinxDirective, SphinxTranslator
@@ -19,6 +19,25 @@ from sphinx.writers.html import HTMLTranslator
 logger = logging.getLogger(__name__)
 
 VALID_OUTPUT_FORMATS = ("png", "jpg", "svg")
+X_DISPLAY_NUMBER = 1
+
+
+def is_headless(config: Config):
+    if config.drawio_headless == "auto":
+        if platform.system() != "Linux":
+            # Xvfb can only run on Linux
+            return False
+
+        # DISPLAY will exist if an X-server is running.
+        if os.getenv("DISPLAY"):
+            return False
+        else:
+            return True
+
+    elif isinstance(config.drawio_headless, bool):
+        return config.drawio_headless
+
+    # We should never reach this point as Sphinx ensures the config options
 
 
 class DrawIOError(SphinxError):
@@ -134,17 +153,16 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         in_filename,
     ]
 
-    if self.builder.config.drawio_headless:
-        # This can only be added if true, an empty string is bad
-        drawio_args.insert(0, "xvfb-run")
-        drawio_args.insert(1, "--auto-servernum")
-
     doc_name = node.get("doc_name", "index")
     cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
 
+    new_env = os.environ.copy()
+    if is_headless(self.config):
+        new_env["DISPLAY"] = ":{}".format(X_DISPLAY_NUMBER)
+
     try:
-        ret = subprocess.run(drawio_args, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, cwd=cwd, check=True)
+        ret = subprocess.run(drawio_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                             cwd=cwd, check=True, env=new_env)
         if not os.path.isfile(out_file_path):
             raise DrawIOError("draw.io did not produce an output file:"
                               "\n[stderr]\n{}\n[stdout]\n{}"
@@ -163,10 +181,6 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     output_format = self.builder.config.drawio_output_format
     filename = node["filename"]
     try:
-        if output_format not in VALID_OUTPUT_FORMATS:
-            raise DrawIOError("drawio_output_format must be one of {}, but is {}"
-                              .format(", ".join(VALID_OUTPUT_FORMATS),
-                                      output_format))
         file_path = render_drawio(self, node, filename, output_format)
     except DrawIOError as e:
         logger.warning("drawio filename: {}: {}".format(filename, e))
@@ -194,6 +208,20 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     raise nodes.SkipNode
 
 
+def on_config_inited(app: Sphinx, config: Config) -> None:
+    if is_headless(config):
+        process = subprocess.Popen(["Xvfb", ":{}".format(X_DISPLAY_NUMBER), "-screen", "0", "1280x768x16"],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        config.xvfb_pid = process.pid
+
+        if process.poll() is not None:
+            raise OSError("Failed to start Xvfb process"
+                          "\n[stdout]\n{}\n[stderr]{}".format(*process.communicate()))
+
+    else:
+        logger.info("running in non-headless mode, not starting Xvfb")
+
+
 def on_build_finished(app: Sphinx, exc: Exception) -> None:
     if exc is None:
         this_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -201,16 +229,27 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         dst = os.path.join(app.outdir, "_static")
         copy_asset(src, dst)
 
+    if is_headless(app.builder.config):
+        try:
+            subprocess.run(["kill", str(app.builder.config.xvfb_pid)],
+                           stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                           check=True)
+        except subprocess.CalledProcessError as exc:
+            logger.warning("Failed to kill Xvfb:n[stderr]\n{}"
+                           "\n[stdout]\n{}".format(exc.stderr, exc.stdout))
+
 
 def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_node(DrawIONode, html=(render_drawio_html, None))
     app.add_directive("drawio", DrawIO)
-    app.add_config_value("drawio_output_format", "png", "html")
+    app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
-    app.add_config_value("drawio_headless", False, "html")
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
+    app.connect("config-inited", on_config_inited)
     app.add_css_file("drawio.css")
 
     return {"parallel_read_safe": True}
