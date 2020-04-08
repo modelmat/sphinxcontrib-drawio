@@ -42,20 +42,13 @@ def _set_config_options_from_json_path(app: Sphinx, config_path: str) -> None:
 def _setup_local_user_config(app):
     """Sets the local user's conf.py values for all tests
 
+    **Note**: This will not work for the `drawio_headless` config option.
+
     Useful for when a developer needs to configure values for a device-specific
     change. The file is .gitignore'd so it will not appear in git.
     Stored in tests/local_user_config.json"""
     local_user_conf_path = Path(__file__).parent.absolute() / "local_user_config.json"
     _set_config_options_from_json_path(app, local_user_conf_path)
-
-
-def _setup_headless_mode_on_ci(app):
-    """Enables drawio_headless=True when used in the CI environment
-
-    Relies on the circleCI `CI` environment variable
-    """
-    if os.getenv("CI", False):
-        _set_config_options_from_json(app, {"drawio_headless": True})
 
 
 @pytest.fixture(scope="session")
@@ -66,7 +59,6 @@ def rootdir():
 @pytest.fixture()
 def content(app: Sphinx):
     _setup_local_user_config(app)
-    _setup_headless_mode_on_ci(app)
     app.build()
     yield app
 
