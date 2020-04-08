@@ -52,11 +52,11 @@ This config option controls the behaviour of running the Xvfb server. It is
 necessary because `draw.io` will not work without an X-server, see
 [this issue](https://github.com/jgraph/drawio-desktop/issues/146).
 
-The `auto` mode (on unix-like systems) will detect whether the program is
-running in a headless environment through the `$DISPLAY` environment variable,
-and act as if it were set to `True`. If running on Windows, or the `$DISPLAY`
-environment variable contains some value (i.e. run in an X-server on a
-developer's machine).
+The `auto` mode will detect whether the program is running in a headless
+environment through the `$DISPLAY` environment variable, and act as if it were
+set to `True`. If not running on Linux, or the `$DISPLAY` environment variable
+contains some value (i.e. running in an X-server on a developer's machine), it
+will act as it it were set to `False`.
 
 Setting the value to `True` will start a virtual X framebuffer through the
 `Xvfb` command before running any `draw.io` commands, and stop it afterwards.
