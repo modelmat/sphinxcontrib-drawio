@@ -5,12 +5,21 @@ workflows:
       - test:
           name: "Test 3.6"
           version: "3.6"
+          filters:  # required since `deploy` has tag filters AND requires `test`
+            tags:
+              only: /.*/
       - test:
           name: "Test 3.7"
           version: "3.7"
+          filters:  # required since `deploy` has tag filters AND requires `test`
+            tags:
+              only: /.*/
       - test:
           name: "Test 3.8"
           version: "3.8"
+          filters:  # required since `deploy` has tag filters AND requires `test`
+            tags:
+              only: /.*/
       - deploy:
           requires:
             - "Test 3.6"
