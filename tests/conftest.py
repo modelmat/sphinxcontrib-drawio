@@ -1,9 +1,10 @@
 import json
 import os
 from pathlib import Path
+from typing import List
 
 import pytest
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from sphinx.application import Sphinx
 from sphinx.testing.path import path
 
@@ -63,12 +64,19 @@ def content(app: Sphinx):
     yield app
 
 
-@pytest.fixture()
-def page(content: Sphinx, request) -> BeautifulSoup:
-    page_name = request.param
-    c = (content.outdir / page_name).text()
+def _directives(content: Sphinx) -> List[Tag]:
+    c = (content.outdir / "index.html").text()
+    return BeautifulSoup(c, "html.parser").find_all("img", {"class": "drawio"})
 
-    yield BeautifulSoup(c, "html.parser")
+
+@pytest.fixture()
+def directives(content: Sphinx) -> List[Tag]:
+    return _directives(content)
+
+
+@pytest.fixture()
+def images(content: Sphinx) -> List[Path]:
+    return [Path(content.outdir / tag["src"]) for tag in _directives(content)]
 
 
 def pytest_configure(config):
