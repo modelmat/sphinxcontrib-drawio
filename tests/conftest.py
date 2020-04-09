@@ -79,6 +79,11 @@ def images(content: Sphinx) -> List[Path]:
     return [Path(content.outdir / tag["src"]) for tag in _directives(content)]
 
 
+@pytest.fixture()
+def tex(content: Sphinx) -> str:
+    return (content.outdir / "python.tex").text()
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "sphinx"

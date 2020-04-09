@@ -15,6 +15,7 @@ from sphinx.util import logging, ensuredir
 from sphinx.util.docutils import SphinxDirective, SphinxTranslator
 from sphinx.util.fileutil import copy_asset
 from sphinx.writers.html import HTMLTranslator
+from sphinx.writers.latex import LaTeXTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def format_spec(argument: Any) -> str:
 
 
 # noinspection PyPep8Naming
-class DrawIONode(nodes.General, nodes.Inline, nodes.Element):
+class DrawIONode(nodes.General, nodes.Element):
     pass
 
 
@@ -208,6 +209,37 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     raise nodes.SkipNode
 
 
+def render_drawio_latex(self: LaTeXTranslator, node: DrawIONode) -> None:
+    # output_format = self.builder.config.drawio_output_format
+    filename = node["filename"]
+    try:
+        file_path = render_drawio(self, node, filename, "pdf")
+    except DrawIOError as e:
+        logger.warning("drawio filename: {}: {}".format(filename, e))
+        raise nodes.SkipNode
+
+    pre = ""
+    post = ""
+
+    if "align" in node["config"]:
+        align = node["config"]["align"]
+        if align == "left":
+            pre = "{"
+            post = r"\hspace*{\fill}}"
+        elif align == "right":
+            pre = r"{\hspace*{\fill}"
+            post = "}"
+        elif align == "center":
+            pre = r"{\hfill"
+            post = r"\hspace*{\fill}}"
+
+    self.body.append("\n{}".format(pre))
+    self.body.append(r"\sphinxincludegraphics[]{%s}" % file_path)
+    self.body.append("{}\n".format(post))
+
+    raise nodes.SkipNode
+
+
 def on_config_inited(app: Sphinx, config: Config) -> None:
     if is_headless(config):
         process = subprocess.Popen(["Xvfb", ":{}".format(X_DISPLAY_NUMBER), "-screen", "0", "1280x768x16"],
@@ -240,7 +272,9 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
-    app.add_node(DrawIONode, html=(render_drawio_html, None))
+    app.add_node(DrawIONode,
+                 html=(render_drawio_html, None),
+                 latex=(render_drawio_latex, None))
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
