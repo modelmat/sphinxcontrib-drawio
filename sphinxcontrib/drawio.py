@@ -210,32 +210,22 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
 
 
 def render_drawio_latex(self: LaTeXTranslator, node: DrawIONode) -> None:
-    # output_format = self.builder.config.drawio_output_format
     filename = node["filename"]
     try:
+        # Here we force a PDF output as LaTeX does not support (SVG) easily,
+        # meaning we would have to remove support or use an inferior format
+        # for the pdf output. PDF output also means that text and is more
+        # natively integrated into the output PDF, at the cost of taking up a
+        # full output page.
+        # See also the implementation in sphinx's "graphviz" extension
         file_path = render_drawio(self, node, filename, "pdf")
     except DrawIOError as e:
         logger.warning("drawio filename: {}: {}".format(filename, e))
         raise nodes.SkipNode
 
-    pre = ""
-    post = ""
+    # TODO: Add :alt: support as PDF captions, if it doesn't interfere with output
 
-    if "align" in node["config"]:
-        align = node["config"]["align"]
-        if align == "left":
-            pre = "{"
-            post = r"\hspace*{\fill}}"
-        elif align == "right":
-            pre = r"{\hspace*{\fill}"
-            post = "}"
-        elif align == "center":
-            pre = r"{\hfill"
-            post = r"\hspace*{\fill}}"
-
-    self.body.append("\n{}".format(pre))
     self.body.append(r"\sphinxincludegraphics[]{%s}" % file_path)
-    self.body.append("{}\n".format(post))
 
     raise nodes.SkipNode
 
