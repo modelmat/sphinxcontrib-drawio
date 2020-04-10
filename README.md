@@ -105,4 +105,5 @@ This option allows control over the alignment of the image on the page.
 - *Possible Values*: any integer
 
 This option allows you to select a particular page from a draw.io file to
-create the image from.
+create the image from. Note: an invalid page-index will revert to one of the
+other valid pages (draw.io binary functionality)
