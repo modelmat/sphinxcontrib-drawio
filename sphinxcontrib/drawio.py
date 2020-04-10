@@ -15,6 +15,7 @@ from sphinx.util import logging, ensuredir
 from sphinx.util.docutils import SphinxDirective, SphinxTranslator
 from sphinx.util.fileutil import copy_asset
 from sphinx.writers.html import HTMLTranslator
+from sphinx.writers.latex import LaTeXTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def format_spec(argument: Any) -> str:
 
 
 # noinspection PyPep8Naming
-class DrawIONode(nodes.General, nodes.Inline, nodes.Element):
+class DrawIONode(nodes.General, nodes.Element):
     pass
 
 
@@ -208,6 +209,27 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
     raise nodes.SkipNode
 
 
+def render_drawio_latex(self: LaTeXTranslator, node: DrawIONode) -> None:
+    filename = node["filename"]
+    try:
+        # Here we force a PDF output as LaTeX does not support (SVG) easily,
+        # meaning we would have to remove support or use an inferior format
+        # for the pdf output. PDF output also means that text and is more
+        # natively integrated into the output PDF, at the cost of taking up a
+        # full output page.
+        # See also the implementation in sphinx's "graphviz" extension
+        file_path = render_drawio(self, node, filename, "pdf")
+    except DrawIOError as e:
+        logger.warning("drawio filename: {}: {}".format(filename, e))
+        raise nodes.SkipNode
+
+    # TODO: Add :alt: support as PDF captions, if it doesn't interfere with output
+
+    self.body.append(r"\sphinxincludegraphics[]{%s}" % file_path)
+
+    raise nodes.SkipNode
+
+
 def on_config_inited(app: Sphinx, config: Config) -> None:
     if is_headless(config):
         process = subprocess.Popen(["Xvfb", ":{}".format(X_DISPLAY_NUMBER), "-screen", "0", "1280x768x16"],
@@ -240,7 +262,9 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
-    app.add_node(DrawIONode, html=(render_drawio_html, None))
+    app.add_node(DrawIONode,
+                 html=(render_drawio_html, None),
+                 latex=(render_drawio_latex, None))
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
