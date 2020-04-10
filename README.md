@@ -35,6 +35,9 @@ This config option controls the output file format which will be placed inside
 the generated HTML. More file formats are available but not exposed, please
 file an issue if you wish to add another file format.
 
+This value is ignored in PDF (LaTeX) output, instead always using the PDF
+output format.
+
 ### Binary Path
 - *Formal Name*: `drawio_binary_path`
 - *Default Value*: `None`
@@ -70,6 +73,7 @@ The extension can be used through the `drawio` directive, as per below:
 ```
 
 The directive can also be configured with a variety of options.
+Most of these options are ignored as they do not work in PDF output.
 
 ### Format
 - *Formal Name*: `:format:`
@@ -79,21 +83,15 @@ The directive can also be configured with a variety of options.
 This option controls the output file format of *this specific* directive. It
 provides similar functionality to that of the `drawio_output_format` config
 option but at a more granular level.
+
+This value is ignored in PDF (LaTeX) output, instead always using the PDF
+output format.
 
 ### Alt Text
 - *Formal Name*: `:alt:`
 
 This option sets the img tag's `alt` attribute. For more information on its
 functionality, see [the Mozilla web documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#attr-alt).
-
-### Format
-- *Formal Name*: `:format:`
-- *Default Value*: `"png"`
-- *Possible Values*: `"png"`, `"jpg"`, or `"svg"`
-
-This option controls the output file format of *this specific* directive. It
-provides similar functionality to that of the `drawio_output_format` config
-option but at a more granular level.
 
 ### Alignment
 - *Formal Name*: `:align:`
