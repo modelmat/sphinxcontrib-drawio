@@ -47,7 +47,6 @@ jobs:
     displayName: Deploy to PyPI
     dependsOn: Test
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
-    environment: 'test-dev'
     strategy:
       runOnce:
         deploy:
