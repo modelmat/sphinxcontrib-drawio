@@ -50,7 +50,6 @@ jobs:
     strategy:
       runOnce:
         deploy:
-          download: none
           steps:
             - task: UsePythonVersion@0
               displayName: 'Select Python Version 3.7'
