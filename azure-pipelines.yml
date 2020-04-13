@@ -1,0 +1,73 @@
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+pool:
+  vmImage: 'ubuntu-16.04'
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+jobs:
+  - job: Test
+    strategy:
+      matrix:
+        Python36:
+          PYTHON_VERSION: '3.6'
+        Python37:
+          PYTHON_VERSION: '3.7'
+        Python38:
+          PYTHON_VERSION: '3.8'
+    steps:
+    - task: UsePythonVersion@0
+      displayName: 'Select Python Version $(PYTHON_VERSION)'
+      inputs:
+        versionSpec: '$(PYTHON_VERSION)'
+        architecture: 'x64'
+
+    - script: |
+        pip install -r requirements.txt
+        pip install -r dev-requirements.txt
+        pip install .
+      displayName: 'Install Python Dependencies'
+
+    - script: |
+        wget -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v12.6.5/draw.io-amd64-12.6.5.deb
+        sudo apt install libasound2 ./drawio.deb
+      displayName: 'Install draw.io'
+
+    - script: sudo apt install xvfb
+      displayName: 'Install xvfb'
+
+    - script: python -m pytest -vv
+      displayName: 'Run Tests'
+
+  - deployment: Deploy
+    displayName: Deploy to PyPI
+    dependsOn: Test
+    strategy:
+      runOnce:
+        deploy:
+          - download: none
+          steps:
+            - task: UsePythonVersion@0
+              displayName: 'Select Python Version 3.7'
+              inputs:
+                versionSpec: '3.7'
+                architecture: 'x64'
+
+            - script: pip install -r requirements.txt
+              displayName: 'Install Python Dependencies'
+
+            - script: |
+                echo -e "[pypi]" >> ~/.pypirc
+                echo -e "username = __token__" >> ~/.pypirc
+                echo -e "password = $PYPI_TOKEN" >> ~/.pypirc
+              displayName: 'Create ~/.pypirc for auth tokens'
+
+            - script: |
+                python setup.py sdist
+                python setup.py bdist_wheel
+              displayName: 'Build Package'
+
+            - script: twine upload dist/*
