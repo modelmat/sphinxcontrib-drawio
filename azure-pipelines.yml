@@ -7,6 +7,7 @@ trigger:
   branches:
     include:
       - master
+      - refs/tags/*
 
 jobs:
   - job: Test
@@ -45,6 +46,7 @@ jobs:
   - deployment: Deploy
     displayName: Deploy to PyPI
     dependsOn: Test
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     strategy:
       runOnce:
         deploy:
