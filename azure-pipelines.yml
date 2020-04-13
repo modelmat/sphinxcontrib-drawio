@@ -63,7 +63,7 @@ jobs:
             - script: |
                 echo -e "[pypi]" >> ~/.pypirc
                 echo -e "username = __token__" >> ~/.pypirc
-                echo -e "password = $PYPI_TOKEN" >> ~/.pypirc
+                echo -e "password = $(PYPI_TOKEN)" >> ~/.pypirc
               displayName: 'Create ~/.pypirc for auth tokens'
 
             - script: |
@@ -71,4 +71,4 @@ jobs:
                 python setup.py bdist_wheel
               displayName: 'Build Package'
 
-            - script: twine upload dist/*
+            - script: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
