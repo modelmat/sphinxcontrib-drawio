@@ -1,6 +1,6 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 pool:
-  vmImage: 'ubuntu-16.04'
+  vmImage: 'ubuntu-18.04'
 
 trigger:
   batch: true
@@ -43,32 +43,30 @@ jobs:
     - script: python -m pytest -vv
       displayName: 'Run Tests'
 
-  - deployment: Deploy
+  - job: Deploy
     displayName: Deploy to PyPI
     dependsOn: Test
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - task: UsePythonVersion@0
-              displayName: 'Select Python Version 3.7'
-              inputs:
-                versionSpec: '3.7'
-                architecture: 'x64'
+    steps:
+      - task: UsePythonVersion@0
+        displayName: 'Select Python Version 3.7'
+        inputs:
+          versionSpec: '3.7'
+          architecture: 'x64'
 
-            - script: pip install -r requirements.txt
-              displayName: 'Install Python Dependencies'
+      - script: pip install -r requirements.txt
+        displayName: 'Install Python Dependencies'
 
-            - script: |
-                echo -e "[pypi]" >> ~/.pypirc
-                echo -e "username = __token__" >> ~/.pypirc
-                echo -e "password = $(PYPI_TOKEN)" >> ~/.pypirc
-              displayName: 'Create ~/.pypirc for auth tokens'
+      - script: |
+          echo -e "[pypi]" >> ~/.pypirc
+          echo -e "username = __token__" >> ~/.pypirc
+          echo -e "password = $(PYPI_TOKEN)" >> ~/.pypirc
+        displayName: 'Create ~/.pypirc for auth tokens'
 
-            - script: |
-                python setup.py sdist
-                python setup.py bdist_wheel
-              displayName: 'Build Package'
+      - script: |
+          python setup.py sdist
+          python setup.py bdist_wheel
+        displayName: 'Build Package'
 
-            - script: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+      - script: twine upload --repository pypi dist/*
+        displayName: 'Upload Package to PyPI'
