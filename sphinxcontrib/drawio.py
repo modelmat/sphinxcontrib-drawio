@@ -70,8 +70,9 @@ class DrawIO(SphinxDirective):
         "height": directives.positive_int,
         "page-index": directives.nonnegative_int,
         "width": directives.positive_int,
+        "scale": directives.positive_int,
     }
-    optional_uniques = ("height", "width")
+    optional_uniques = ("height", "width", "scale")
 
     def run(self) -> List[Node]:
         if self.arguments:
@@ -139,6 +140,9 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
             value = node["config"][option]
             extra_args.append("--{}".format(option))
             extra_args.append(str(value))
+        elif option == "scale":
+            extra_args.append("--{}".format(option))
+            extra_args.append(str(self.config.drawio_default_scale))
 
     drawio_args = [
         binary_path,
@@ -268,6 +272,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
+    app.add_config_value("drawio_default_scale", 1, "html", directives.positive_int)
     # noinspection PyTypeChecker
     app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
 
