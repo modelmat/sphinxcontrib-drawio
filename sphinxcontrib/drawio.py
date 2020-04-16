@@ -52,6 +52,7 @@ def align_spec(argument: Any) -> str:
 def format_spec(argument: Any) -> str:
     return directives.choice(argument, VALID_OUTPUT_FORMATS)
 
+
 def boolean_spec(argument: Any) -> bool:
     if argument == "true" or argument == "false":
         return argument == "true"
