@@ -113,6 +113,10 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     page_index = str(node["config"].get("page-index", 0))
     output_format = node["config"].get("format") or default_output_format
     scale = str(node["config"].get("scale", self.config.drawio_default_scale))
+    if "transparency" in node["config"]:
+        transparent = node["config"]["transparency"]
+    else:
+        transparent = self.config.drawio_default_transparency
 
     # Any directive options which would change the output file would go here
     unique_values = (
@@ -149,8 +153,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
             extra_args.append("--{}".format(option))
             extra_args.append(str(value))
 
-    if ("transparency" in node["config"] and bool(node["config"])) or \
-            (bool(self.config.drawio_default_transparency) and "transparency" not in node["config"]):
+    if transparent:
         extra_args.append("--transparent")
 
     drawio_args = [
