@@ -66,6 +66,24 @@ Setting the value to `True` will start a virtual X framebuffer through the
 
 Setting the value to `False` will run the `draw.io` binary as normal.
 
+### Default Scale
+- *Formal Name*: `drawio_default_scale`
+- *Default Value*: `1`
+
+This config option sets the default scale for all diagrams. This simply scales
+the size of the diagram. By default draw.io *usually* outputs relatively low
+resolution images, this setting can be used to remedy that. Automatically
+gets overridden if the scale is set for a individual diagram in the directive.
+
+### Default Transparency
+- *Formal Name*: `drawio_default_transparency`
+- *Default Value*:  `False`
+- *Possible Values*: `True` or `False`
+
+This changes the background transparency for diagrams exported to `png` files. 
+Will get overridden if the transparency is set for a individual diagram in the 
+directive. If the output format isn't `png`, it will not effect the image generated.
+
 ## Usage
 The extension can be used through the `drawio` directive, as per below:
 ```
@@ -107,3 +125,22 @@ This option allows control over the alignment of the image on the page.
 This option allows you to select a particular page from a draw.io file to
 create the image from. Note: an invalid page-index will revert to one of the
 other valid pages (draw.io binary functionality)
+
+### Scale
+- *Formal Name*: `:scale:`
+- *Default Value*: `drawio_default_scale` set in conf.py
+- *Possible Values*: any positive integer
+
+This simply scales the size of the output image. By default draw.io *usually* 
+outputs relatively low resolution images, this setting can be used to remedy that.
+This overrides the `drawio_default_scale` set in conf.py for this specific diagram.
+
+### Transparency
+- *Formal Name*: `:transparency:`
+- *Default Value*: `drawio_default_transparency` set in conf.py
+- *Possible Values*: `"true"` or `"false"`
+
+This changes the background transparency for diagrams exported to `png` files.
+Will override `drawio_default_transparency` which was st in conf.py for this
+specific diagram. If this setting is specified while the output format is not
+`png` it will have no effect on the generated image
