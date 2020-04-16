@@ -113,7 +113,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
 
     page_index = str(node["config"].get("page-index", 0))
     output_format = node["config"].get("format") or default_output_format
-    scale = str(node["config"].get("scale", self.config.drawio_default_scale))
+    scale = str(node["config"].get("scale") or self.config.drawio_default_scale)
     if "transparency" in node["config"]:
         transparent = node["config"]["transparency"]
     else:
