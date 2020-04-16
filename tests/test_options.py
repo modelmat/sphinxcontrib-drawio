@@ -43,3 +43,19 @@ def test_width_height(images: List[Path]):
     assert get_image_size(images[1]) == (202, 102)
     assert get_image_size(images[2]) == (1007, 511)
 
+# noinspection PyTypeChecker
+@pytest.mark.sphinx("html", testroot="test-scale")
+def test_scale(images: List[Path]):
+    # https://github.com/jgraph/drawio-desktop/issues/254
+    # Scale is not exact
+
+    # actual image size is 124x63
+    assert get_image_size(images[0]) == (245, 124)
+    assert get_image_size(images[1]) == (1217, 616)
+    assert get_image_size(images[3]) == (610, 309)
+
+
+@pytest.mark.sphinx("html", testroot="test-transparency")
+def test_transparency():
+    pass
+
