@@ -74,6 +74,8 @@ This config option sets the default scale for all diagrams. This simply scales
 the size of the diagram. By default draw.io *usually* outputs relatively low
 resolution images, this setting can be used to remedy that. Automatically
 gets overridden if the scale is set for a individual diagram in the directive.
+If either width or height are set for a image, scale will have no effect on the
+generated image.
 
 ### Default Transparency
 - *Formal Name*: `drawio_default_transparency`
@@ -134,6 +136,8 @@ other valid pages (draw.io binary functionality)
 This simply scales the size of the output image. By default draw.io *usually* 
 outputs relatively low resolution images, this setting can be used to remedy that.
 This overrides the `drawio_default_scale` set in conf.py for this specific diagram.
+If either width or height are set for a given image, scale will have no effect on
+the generated image.
 
 ### Transparency
 - *Formal Name*: `:transparency:`
