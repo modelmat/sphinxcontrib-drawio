@@ -130,7 +130,9 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         binary_path = self.builder.config.drawio_binary_path
     elif platform.system() == "Windows":
         binary_path = r"C:\Program Files\draw.io\draw.io.exe"
-    else:
+    elif platform.system() == "Darwin": # Mac
+        binary_path = "/Applications/draw.io.app/Contents/MacOS/draw.io"
+    else: # Assumes Linux
         binary_path = "/opt/draw.io/drawio"
 
     extra_args = []
