@@ -8,17 +8,17 @@ from sphinx.util.images import get_image_size
 
 @pytest.mark.sphinx("html", testroot="simple")
 def test_simple(directives: List[Tag]):
-    assert directives[0].decode() == '<img alt="_images/drawio-fbceb72618f948b0bfc28d7a079cf11c81b6f333.png" ' \
-                                     'class="drawio" src="_images/drawio-fbceb72618f948b0bfc28d7a079cf11c81b6f333.png' \
+    assert directives[0].decode() == '<img alt="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png" ' \
+                                     'class="drawio" src="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png' \
                                      '"/>'
 
 
 @pytest.mark.sphinx("html", testroot="page-index")
 def test_page_index(images: List[Path]):
-    assert images[0].name == "drawio-c88b9718b7745fa0133283899fe862196cf2a708.png"
-    assert images[1].name == "drawio-e38354aacbe9e35dd0777a43a55cd9ae100f85fe.png"
-    assert images[2].name == "drawio-d570499ee2b0167a6033bb197f586999df37fe43.png"
-    assert images[3].name == "drawio-c88b9718b7745fa0133283899fe862196cf2a708.png"
+    assert images[0].name == "drawio-23596e9713a51f864e734695324de3c19e930125.png"
+    assert images[1].name == "drawio-d890782f09bf6478d353265d5894253de5fefbd3.png"
+    assert images[2].name == "drawio-4d4e2f8704b20c01096eed9b97cd6588d479f3a6.png"
+    assert images[3].name == "drawio-23596e9713a51f864e734695324de3c19e930125.png"
 
 
 @pytest.mark.sphinx("html", testroot="alt")
@@ -53,7 +53,7 @@ def test_scale(images: List[Path]):
     # actual image size is 124x63
     assert get_image_size(images[0]) == (245, 124)
     assert get_image_size(images[1]) == (1217, 616)
-    assert get_image_size(images[3]) == (610, 309)
+    assert get_image_size(images[2]) == (610, 309)
 
 
 @pytest.mark.sphinx("html", testroot="transparency")
