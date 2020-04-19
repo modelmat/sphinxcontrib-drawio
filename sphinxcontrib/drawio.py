@@ -54,8 +54,10 @@ def format_spec(argument: Any) -> str:
 
 
 def boolean_spec(argument: Any) -> bool:
-    if argument == "true" or argument == "false":
-        return argument == "true"
+    if argument == "true":
+        return True
+    elif argument == "false":
+        return False
     else:
         raise ValueError("unexpected value. true or false expected")
 
@@ -113,14 +115,8 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
 
     page_index = str(node["config"].get("page-index", 0))
     output_format = node["config"].get("format") or default_output_format
-    if "scale" in node["config"]:
-        scale = str(node["config"].get("scale"))
-    else:
-        scale = str(self.config.drawio_default_scale)
-    if "transparency" in node["config"]:
-        transparent = node["config"]["transparency"]
-    else:
-        transparent = self.config.drawio_default_transparency
+    scale = str(node["config"].get("scale", self.config.drawio_default_scale))
+    transparent = bool(node["config"].get("transparency", self.config.drawio_default_transparency))
 
     # Any directive options which would change the output file would go here
     unique_values = (
@@ -128,6 +124,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         # Mainly useful for pytest, as it creates a new build directory every time
         node["filename"].replace(self.builder.srcdir, ""),
         page_index,
+        scale,
         output_format,
         *[str(node["config"].get(option)) for option in DrawIO.optional_uniques]
     )
