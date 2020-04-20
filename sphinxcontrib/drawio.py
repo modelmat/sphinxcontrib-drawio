@@ -77,9 +77,9 @@ class DrawIO(SphinxDirective):
         "alt": directives.unchanged,
         "format": format_spec,
         "height": directives.positive_int,
-        "transparency": boolean_spec,
         "page-index": directives.nonnegative_int,
         "scale": directives.positive_int,
+        "transparency": boolean_spec,
         "width": directives.positive_int,
     }
     optional_uniques = ("height", "width")
