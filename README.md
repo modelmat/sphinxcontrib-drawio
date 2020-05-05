@@ -1,7 +1,8 @@
 # sphinxcontrib-drawio
 Sphinx Extension to add the ``drawio`` directive to include draw.io diagrams.
 
-**Important:** This extension is in development and not all features will work as advertised or at all.
+**Important:** This extension does not work on readthedocs as RTD does not allow packages (e.g. drawio) to be installed.
+It would be better to use editable SVGs or PNGs, accessible through draw.io's File > Export menu.
 
 The drawio-desktop package does not run without an x-server (e.g. when in a CI
 environment), see
