@@ -4,5 +4,5 @@ import pytest
 @pytest.mark.sphinx("latex", testroot="simple")
 def test_simple(tex: str):
     assert r"\sphinxincludegraphics[]" \
-           r"{drawio-fb010705c7934a6a1d6bb9c92ad114cd0c2cac76.pdf}" in tex
+           r"{drawio-6cf867c6e94665d8489581a35c2d215220d6c152.pdf}" in tex
 

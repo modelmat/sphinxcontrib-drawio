@@ -53,6 +53,15 @@ def format_spec(argument: Any) -> str:
     return directives.choice(argument, VALID_OUTPUT_FORMATS)
 
 
+def boolean_spec(argument: Any) -> bool:
+    if argument == "true":
+        return True
+    elif argument == "false":
+        return False
+    else:
+        raise ValueError("unexpected value. true or false expected")
+
+
 # noinspection PyPep8Naming
 class DrawIONode(nodes.General, nodes.Element):
     pass
@@ -69,6 +78,8 @@ class DrawIO(SphinxDirective):
         "format": format_spec,
         "height": directives.positive_int,
         "page-index": directives.nonnegative_int,
+        "scale": directives.positive_int,
+        "transparency": boolean_spec,
         "width": directives.positive_int,
     }
     optional_uniques = ("height", "width")
@@ -104,6 +115,8 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
 
     page_index = str(node["config"].get("page-index", 0))
     output_format = node["config"].get("format") or default_output_format
+    scale = str(node["config"].get("scale", self.config.drawio_default_scale))
+    transparent = node["config"].get("transparency", self.config.drawio_default_transparency)
 
     # Any directive options which would change the output file would go here
     unique_values = (
@@ -111,6 +124,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         # Mainly useful for pytest, as it creates a new build directory every time
         node["filename"].replace(self.builder.srcdir, ""),
         page_index,
+        scale,
         output_format,
         *[str(node["config"].get(option)) for option in DrawIO.optional_uniques]
     )
@@ -140,11 +154,16 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
             extra_args.append("--{}".format(option))
             extra_args.append(str(value))
 
+    if transparent:
+        extra_args.append("--transparent")
+
     drawio_args = [
         binary_path,
         "--export",
         "--page-index",
         page_index,
+        "--scale",
+        scale,
         *extra_args,
         "--format",
         output_format,
@@ -267,6 +286,8 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
+    app.add_config_value("drawio_default_scale", 1, "html")
+    app.add_config_value("drawio_default_transparency", False, "html", ENUM(True, False))
     # noinspection PyTypeChecker
     app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
 
