@@ -89,6 +89,15 @@ This changes the background transparency for diagrams exported to `png` files.
 Will get overridden if the transparency is set for a individual diagram in the 
 directive. If the output format isn't `png`, it will not effect the image generated.
 
+### No Sandbox
+- *Formal Name*: `drawio_no_sandbox`
+- *Default Value*: `False`
+- *Possible Values*: `True` or `False`
+
+This option may be needed to work in a docker container. You should probably
+only enable it if you are experiencing issues. See https://github.com/jgraph/drawio-desktop/issues/144 
+for more info. 
+
 ## Usage
 The extension can be used through the `drawio` directive, as per below:
 ```

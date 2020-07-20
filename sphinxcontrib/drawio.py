@@ -117,6 +117,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     output_format = node["config"].get("format") or default_output_format
     scale = str(node["config"].get("scale", self.config.drawio_default_scale))
     transparent = node["config"].get("transparency", self.config.drawio_default_transparency)
+    no_sandbox = self.config.drawio_no_sandbox
 
     # Any directive options which would change the output file would go here
     unique_values = (
@@ -171,6 +172,10 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         out_file_path,
         in_filename,
     ]
+
+    if no_sandbox:
+        # This may be needed for docker support, and it has to be the last argument to work.
+        drawio_args.append("--no-sandbox")
 
     doc_name = node.get("doc_name", "index")
     cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
@@ -287,9 +292,12 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
     app.add_config_value("drawio_binary_path", None, "html")
     app.add_config_value("drawio_default_scale", 1, "html")
+    # noinspection PyTypeChecker
     app.add_config_value("drawio_default_transparency", False, "html", ENUM(True, False))
     # noinspection PyTypeChecker
     app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_no_sandbox", False, "html", ENUM(True, False))
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
