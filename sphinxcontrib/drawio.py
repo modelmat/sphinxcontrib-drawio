@@ -161,6 +161,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     drawio_args = [
         binary_path,
         "--export",
+        "--crop",
         "--page-index",
         page_index,
         "--scale",
