@@ -3,6 +3,7 @@ import platform
 import posixpath
 import subprocess
 from hashlib import sha1
+from os.path import getmtime
 from typing import Dict, Any, List
 
 from docutils import nodes
@@ -136,7 +137,8 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir,
                                  filename)
 
-    if os.path.isfile(out_file_path):
+    if (os.path.isfile(out_file_path)
+            and getmtime(in_filename) < getmtime(out_file_path)):
         return file_path
 
     ensuredir(os.path.dirname(out_file_path))
