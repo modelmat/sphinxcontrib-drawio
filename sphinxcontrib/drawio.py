@@ -148,6 +148,11 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     else:
         binary_path = "/opt/draw.io/drawio"
 
+    scale_args = ["--scale", scale]
+    if output_format == "pdf" and float(scale) == 1.0:
+        # https://github.com/jgraph/drawio-desktop/issues/344 workaround
+        scale_args.clear()
+
     extra_args = []
     for option in DrawIO.optional_uniques:
         if option in node["config"]:
@@ -164,8 +169,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         "--crop",
         "--page-index",
         page_index,
-        "--scale",
-        scale,
+        *scale_args,
         *extra_args,
         "--format",
         output_format,
