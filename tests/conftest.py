@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from typing import List
 
@@ -80,8 +81,10 @@ def images(content: Sphinx) -> List[Path]:
 
 
 @pytest.fixture()
-def tex(content: Sphinx) -> str:
-    return (content.outdir / "python.tex").text()
+def tex_images(content: Sphinx) -> List[Path]:
+    tex = (content.outdir / "python.tex").text()
+    matches = re.finditer(r"\\sphinxincludegraphics\[\]{(.*?)}", tex)
+    return [content.outdir / m.group(1) for m in matches]
 
 
 def pytest_configure(config):
