@@ -64,6 +64,16 @@ def content(app: Sphinx):
     app.build()
     yield app
 
+    
+@pytest.fixture()
+def make_app_with_local_user_config(make_app):
+    def make(*args, **kwargs):
+        app = make_app(*args, **kwargs)
+        _setup_local_user_config(app)
+        return app
+
+    yield make
+
 
 def _directives(content: Sphinx) -> List[Tag]:
     c = (content.outdir / "index.html").text()
