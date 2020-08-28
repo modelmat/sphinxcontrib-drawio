@@ -1,6 +1,8 @@
+import os
 import os.path
 import platform
 import posixpath
+import signal
 import subprocess
 from hashlib import sha1
 from os.path import getmtime
@@ -282,13 +284,8 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         copy_asset(src, dst)
 
     if is_headless(app.builder.config):
-        try:
-            subprocess.run(["kill", str(app.builder.config.xvfb_pid)],
-                           stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                           check=True)
-        except subprocess.CalledProcessError as exc:
-            logger.warning("Failed to kill Xvfb:n[stderr]\n{}"
-                           "\n[stdout]\n{}".format(exc.stderr, exc.stdout))
+        os.kill(app.builder.config.xvfb_pid, signal.SIGTERM)
+        os.waitid(os.P_PID, app.builder.config.xvfb_pid, os.WEXITED)
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
