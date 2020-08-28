@@ -1,28 +1,31 @@
 import os
 import os.path
 import platform
-import posixpath
 import signal
 import subprocess
 from hashlib import sha1
-from os.path import getmtime
+from pathlib import Path
 from typing import Dict, Any, List
 
-from docutils import nodes
 from docutils.nodes import Node
 from docutils.parsers.rst import directives
+from docutils.parsers.rst.directives.images import Image
 from sphinx.application import Sphinx
+from sphinx.builders import Builder
 from sphinx.config import Config, ENUM
+from sphinx.directives.patches import Figure
 from sphinx.errors import SphinxError
 from sphinx.util import logging, ensuredir
-from sphinx.util.docutils import SphinxDirective, SphinxTranslator
+from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
-from sphinx.writers.html import HTMLTranslator
-from sphinx.writers.latex import LaTeXTranslator
+
+from .old_drawio import (DrawIONode, DrawIO,
+                         render_drawio_html, render_drawio_latex)
+
 
 logger = logging.getLogger(__name__)
 
-VALID_OUTPUT_FORMATS = ("png", "jpg", "svg")
+VALID_OUTPUT_FORMATS = ("png", "jpg", "svg", "pdf")
 X_DISPLAY_NUMBER = 1
 
 
@@ -48,10 +51,6 @@ class DrawIOError(SphinxError):
     category = 'DrawIO Error'
 
 
-def align_spec(argument: Any) -> str:
-    return directives.choice(argument, ("left", "center", "right"))
-
-
 def format_spec(argument: Any) -> str:
     return directives.choice(argument, VALID_OUTPUT_FORMATS)
 
@@ -65,28 +64,16 @@ def boolean_spec(argument: Any) -> bool:
         raise ValueError("unexpected value. true or false expected")
 
 
-# noinspection PyPep8Naming
-class DrawIONode(nodes.General, nodes.Element):
-    pass
-
-
-class DrawIO(SphinxDirective):
-    has_content = False
-    required_arguments = 1
-    optional_arguments = 1
-    final_argument_whitespace = True
+class DrawIOBase(SphinxDirective):
     option_spec = {
-        "align": align_spec,
-        "alt": directives.unchanged,
         "format": format_spec,
-        "height": directives.positive_int,
         "page-index": directives.nonnegative_int,
-        "scale": directives.positive_int,
-        "transparency": boolean_spec,
-        "width": directives.positive_int,
+        "transparency":  boolean_spec,
+        "export-scale":  directives.positive_int,
+        "export-width":  directives.positive_int,
+        "export-height":  directives.positive_int,
     }
-    optional_uniques = ("height", "width")
-
+    
     def run(self) -> List[Node]:
         if self.arguments:
             rel_filename, filename = self.env.relfn2path(self.arguments[0])
@@ -103,50 +90,94 @@ class DrawIO(SphinxDirective):
                 line=self.lineno,
             )]
 
-        node = DrawIONode()
-        node["filename"] = filename
-        node["config"] = self.options
-        node["doc_name"] = self.env.docname
+        builder = self.env.app.builder
+        builder_export_format = builder.config.drawio_builder_export_format
+        try:
+            export_format = builder_export_format[builder.name]
+        except KeyError:
+            logger.warning(f"No export format specified for builder "
+                           f"'{builder.name}' in "
+                           f"'drawio_builder_export_format'. Using "
+                           f"'{FALLBACK_EXPORT_FORMAT}' as a fall-back.")
+            export_format = FALLBACK_EXPORT_FORMAT
+        export_path = drawio_export(builder, self.options, filename,
+                                    export_format)
+        source_path = Path(builder.env.srcdir)
+        document_path = source_path / builder.env.docname
+        nodes = super().run()
+        image = self._get_image_node(nodes)
+        image["classes"].append("drawio")
+        image["uri"] = os.path.relpath(export_path, document_path.parent)
+        return nodes
 
-        self.add_name(node)
-        return [node]
+
+class DrawIOImage(DrawIOBase, Image):
+    option_spec = Image.option_spec.copy()
+    option_spec.update(DrawIOBase.option_spec)
+
+    @staticmethod
+    def _get_image_node(nodes):
+        image, = nodes                   # TODO: test
+        return image
 
 
-def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
+class DrawIOFigure(DrawIOBase, Figure):
+    option_spec = Figure.option_spec.copy()
+    option_spec.update(DrawIOBase.option_spec)
+
+    @staticmethod
+    def _get_image_node(nodes):
+        figure, = nodes                  # TODO: test
+        image, *caption = figure         # TODO: test
+        return image
+
+
+OPTIONAL_UNIQUES = {
+    "export-height": "height",
+    "export-width": "width",
+}
+
+
+def drawio_export(builder: Builder, options: dict, in_filename: str,
                   default_output_format: str) -> str:
     """Render drawio file into an output image file."""
 
-    page_index = str(node["config"].get("page-index", 0))
-    output_format = node["config"].get("format") or default_output_format
-    scale = str(node["config"].get("scale", self.config.drawio_default_scale))
-    transparent = node["config"].get("transparency", self.config.drawio_default_transparency)
-    no_sandbox = self.config.drawio_no_sandbox
+    page_index = str(options.get("page-index", 0))
+    output_format = options.get("format") or default_output_format
+    scale = str(options.get("export-scale",
+                            builder.config.drawio_default_export_scale) / 100)
+    transparent = options.get("transparency",
+                              builder.config.drawio_default_transparency)
+    no_sandbox = builder.config.drawio_no_sandbox
+
+    input_abspath = Path(in_filename)
+    input_relpath = input_abspath.relative_to(builder.srcdir)
+    input_stem = input_abspath.stem
 
     # Any directive options which would change the output file would go here
     unique_values = (
         # This ensures that the same file hash is generated no matter the build directory
         # Mainly useful for pytest, as it creates a new build directory every time
-        node["filename"].replace(self.builder.srcdir, ""),
+        str(input_relpath),
         page_index,
         scale,
-        output_format,
-        *[str(node["config"].get(option)) for option in DrawIO.optional_uniques]
+        "true" if transparent else "false",
+        *[str(options.get(option)) for option in OPTIONAL_UNIQUES]
     )
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
-    filename = "drawio-{}.{}".format(sha_key, default_output_format)
-    file_path = posixpath.join(self.builder.imgpath, filename)
-    out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir,
-                                 filename)
+    export_dir = Path(builder.srcdir) / ".drawio" / sha_key
+    ensuredir(export_dir)
+    filename = Path(input_stem).with_suffix('.' + output_format)
+    export_path = export_dir / filename
+    export_relpath = export_path.relative_to(builder.srcdir)
 
-    if (os.path.isfile(out_file_path)
-            and getmtime(in_filename) < getmtime(out_file_path)):
-        return file_path
+    if (export_path.exists()
+            and export_path.stat().st_mtime > input_abspath.stat().st_mtime):
+        return export_path
 
-    ensuredir(os.path.dirname(out_file_path))
-
-    if self.builder.config.drawio_binary_path:
-        binary_path = self.builder.config.drawio_binary_path
+    if builder.config.drawio_binary_path:
+        binary_path = builder.config.drawio_binary_path
     elif platform.system() == "Windows":
         binary_path = r"C:\Program Files\draw.io\draw.io.exe"
     else:
@@ -158,10 +189,10 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         scale_args.clear()
 
     extra_args = []
-    for option in DrawIO.optional_uniques:
-        if option in node["config"]:
-            value = node["config"][option]
-            extra_args.append("--{}".format(option))
+    for option, drawio_arg in OPTIONAL_UNIQUES.items():
+        if option in options:
+            value = options[option]
+            extra_args.append("--{}".format(drawio_arg))
             extra_args.append(str(value))
 
     if transparent:
@@ -178,7 +209,7 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         "--format",
         output_format,
         "--output",
-        out_file_path,
+        str(export_path),
         in_filename,
     ]
 
@@ -186,21 +217,19 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         # This may be needed for docker support, and it has to be the last argument to work.
         drawio_args.append("--no-sandbox")
 
-    doc_name = node.get("doc_name", "index")
-    cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
-
     new_env = os.environ.copy()
-    if is_headless(self.config):
+    if is_headless(builder.config):
         new_env["DISPLAY"] = ":{}".format(X_DISPLAY_NUMBER)
 
     try:
-        ret = subprocess.run(drawio_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                             cwd=cwd, check=True, env=new_env)
-        if not os.path.isfile(out_file_path):
+        ret = subprocess.run(drawio_args, stderr=subprocess.PIPE,
+                             stdout=subprocess.PIPE, check=True, env=new_env)
+        if not export_path.exists():
             raise DrawIOError("draw.io did not produce an output file:"
                               "\n[stderr]\n{}\n[stdout]\n{}"
                               .format(ret.stderr, ret.stdout))
-        return file_path
+        logger.info(f"(drawio) '{input_relpath}' -> '{export_relpath}'")
+        return export_path
     except OSError as exc:
         raise DrawIOError("draw.io ({}) exited with error:\n{}"
                           .format(" ".join(drawio_args), exc))
@@ -208,58 +237,6 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         raise DrawIOError("draw.io ({}) exited with error:\n[stderr]\n{}"
                           "\n[stdout]\n{}".format(" ".join(drawio_args),
                                                   exc.stderr, exc.stdout))
-
-
-def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
-    output_format = self.builder.config.drawio_output_format
-    filename = node["filename"]
-    try:
-        file_path = render_drawio(self, node, filename, output_format)
-    except DrawIOError as e:
-        logger.warning("drawio filename: {}: {}".format(filename, e))
-        raise nodes.SkipNode
-
-    alt = node["config"].get("alt", file_path)
-    if "align" in node["config"]:
-        self.body.append('<div align="{0}" class="align-{0}">'.format(node["config"]["align"]))
-
-    if output_format == "svg":
-        self.body.append('<div class="drawio">')
-        self.body.append('<object data="{}" type="image/svg+xml"'
-                         'class="drawio">\n'.format(file_path))
-        self.body.append('<p class="warning">{}</p>'.format(alt))
-        self.body.append('</object></div>\n')
-    else:
-        self.body.append('<div class="drawio">')
-        self.body.append('<img src="{}" alt="{}" class="drawio" />'
-                         .format(file_path, alt))
-        self.body.append('</div>')
-
-    if "align" in node["config"]:
-        self.body.append('</div>\n')
-
-    raise nodes.SkipNode
-
-
-def render_drawio_latex(self: LaTeXTranslator, node: DrawIONode) -> None:
-    filename = node["filename"]
-    try:
-        # Here we force a PDF output as LaTeX does not support (SVG) easily,
-        # meaning we would have to remove support or use an inferior format
-        # for the pdf output. PDF output also means that text and is more
-        # natively integrated into the output PDF, at the cost of taking up a
-        # full output page.
-        # See also the implementation in sphinx's "graphviz" extension
-        file_path = render_drawio(self, node, filename, "pdf")
-    except DrawIOError as e:
-        logger.warning("drawio filename: {}: {}".format(filename, e))
-        raise nodes.SkipNode
-
-    # TODO: Add :alt: support as PDF captions, if it doesn't interfere with output
-
-    self.body.append(r"\sphinxincludegraphics[]{%s}" % file_path)
-
-    raise nodes.SkipNode
 
 
 def on_config_inited(app: Sphinx, config: Config) -> None:
@@ -288,20 +265,38 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         os.waitid(os.P_PID, app.builder.config.xvfb_pid, os.WEXITED)
 
 
+FALLBACK_EXPORT_FORMAT = "png"
+DEFAULT_BUILDER_EXPORT_FORMAT = {
+    "html": "svg",
+    "latex": "pdf",
+    "rinoh": "pdf",
+}
+
+
 def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_directive("drawio-image", DrawIOImage)
+    app.add_directive("drawio-figure", DrawIOFigure)
+    app.add_config_value("drawio_builder_export_format",
+                         DEFAULT_BUILDER_EXPORT_FORMAT, "html", dict)
+    app.add_config_value("drawio_default_export_scale", 100, "html")
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_default_transparency", False, "html",
+                         ENUM(True, False))
+    app.add_config_value("drawio_binary_path", None, "html")
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_headless", "auto", "html",
+                         ENUM("auto", True, False))
+    # noinspection PyTypeChecker
+    app.add_config_value("drawio_no_sandbox", False, "html",
+                         ENUM(True, False))
+
+    # deprecated
     app.add_node(DrawIONode,
                  html=(render_drawio_html, None),
                  latex=(render_drawio_latex, None))
     app.add_directive("drawio", DrawIO)
     app.add_config_value("drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS))
-    app.add_config_value("drawio_binary_path", None, "html")
     app.add_config_value("drawio_default_scale", 1, "html")
-    # noinspection PyTypeChecker
-    app.add_config_value("drawio_default_transparency", False, "html", ENUM(True, False))
-    # noinspection PyTypeChecker
-    app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
-    # noinspection PyTypeChecker
-    app.add_config_value("drawio_no_sandbox", False, "html", ENUM(True, False))
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
