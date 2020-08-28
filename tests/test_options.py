@@ -19,6 +19,11 @@ def test_page_index(images: List[Path]):
     assert images[1].name == "drawio-d890782f09bf6478d353265d5894253de5fefbd3.png"
     assert images[2].name == "drawio-4d4e2f8704b20c01096eed9b97cd6588d479f3a6.png"
     assert images[3].name == "drawio-23596e9713a51f864e734695324de3c19e930125.png"
+    
+    assert get_image_size(images[0]) == (124, 63)
+    assert get_image_size(images[1]) == (64, 63)
+    assert get_image_size(images[2]) == (64, 63)
+    assert get_image_size(images[3]) == (124, 63)
 
 
 @pytest.mark.sphinx("html", testroot="alt")
