@@ -5,14 +5,28 @@ from typing import List
 import pytest
 
 
+# deprecated drawio directive test
 @pytest.mark.sphinx("latex", testroot="simple")
-def test_simple(tex_images: List[Path]):
-    image, = tex_images
+def test_simple(legacy_tex_images: List[Path]):
+    image, = legacy_tex_images
     assert image.basename() == "drawio-6cf867c6e94665d8489581a35c2d215220d6c152.pdf"
 
 
+@pytest.mark.sphinx("latex", testroot="image")
+def test_image(tex_images: List[Path]):
+    image, = tex_images
+    assert image.basename() == "box.pdf"
+
+
+# deprecated drawio directive test
 @pytest.mark.sphinx("latex", testroot="simple")
-def test_crop(tex_images: List[Path]):
+def test_crop(legacy_tex_images: List[Path]):
+    image, = legacy_tex_images
+    assert get_mediabox(image) == ("88.080002", "46.079998")
+
+
+@pytest.mark.sphinx("latex", testroot="image")
+def test_image_crop(tex_images: List[Path]):
     image, = tex_images
     assert get_mediabox(image) == ("88.080002", "46.079998")
 

@@ -76,7 +76,7 @@ def make_app_with_local_user_config(make_app):
 
 
 def _directives(content: Sphinx) -> List[Tag]:
-    c = (content.outdir / "index.html").text()
+    c = (content.outdir / "index.html").read_text()
     return BeautifulSoup(c, "html.parser").find_all("img", {"class": "drawio"})
 
 
@@ -91,10 +91,17 @@ def images(content: Sphinx) -> List[Path]:
 
 
 @pytest.fixture()
-def tex_images(content: Sphinx) -> List[Path]:
+def legacy_tex_images(content: Sphinx) -> List[Path]:
     tex = (content.outdir / "python.tex").text()
     matches = re.finditer(r"\\sphinxincludegraphics\[\]{(.*?)}", tex)
     return [content.outdir / m.group(1) for m in matches]
+
+
+@pytest.fixture()
+def tex_images(content: Sphinx) -> List[Path]:
+    tex = (content.outdir / "python.tex").text()
+    matches = re.finditer(r"\\sphinxincludegraphics{{(.*)}\.pdf}", tex)
+    return [content.outdir / (m.group(1) + '.pdf') for m in matches]
 
 
 def pytest_configure(config):
