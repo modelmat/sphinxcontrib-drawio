@@ -126,9 +126,17 @@ def test_figure(content: Sphinx, directives: List[Tag]):
 
 
 @pytest.mark.sphinx("html", testroot="reference")
-def test_reference(content: Sphinx, directives: List[Tag]):
+def test_reference(directives: List[Tag]):
     img, = directives
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
     assert img["class"] == ["drawio"]
+
+
+@pytest.mark.sphinx("html", testroot="warnings")
+def test_warnings(content: Sphinx, directives: List[Tag]):
+    assert len(directives) == 0
+    warnings = content._warning.getvalue()
+    assert "1 argument(s) required, 0 supplied" in warnings
+    assert "missing.drawio not found" in warnings
