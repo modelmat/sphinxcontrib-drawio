@@ -123,3 +123,12 @@ def test_figure(content: Sphinx, directives: List[Tag]):
         div = img.parent
         assert div.name == 'div'
         assert "figure" in div["class"]
+
+
+@pytest.mark.sphinx("html", testroot="reference")
+def test_reference(content: Sphinx, directives: List[Tag]):
+    img, = directives
+    assert img.name == "img"
+    assert img["src"] == "_images/box.svg"
+    assert img["alt"] == "_images/box.svg"
+    assert img["class"] == ["drawio"]
