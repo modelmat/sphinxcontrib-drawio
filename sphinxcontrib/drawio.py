@@ -7,7 +7,7 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Dict, Any, List
 
-from docutils.nodes import Node
+from docutils.nodes import Node, image as docutils_image
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 from sphinx.application import Sphinx
@@ -64,6 +64,12 @@ def boolean_spec(argument: Any) -> bool:
         raise ValueError("unexpected value. true or false expected")
 
 
+def traverse(nodes):
+  for node in nodes:
+    yield node
+    yield from traverse(node.children)
+    
+
 class DrawIOBase(SphinxDirective):
     option_spec = {
         "format": format_spec,
@@ -83,7 +89,6 @@ class DrawIOBase(SphinxDirective):
                     "External draw.io file {} not found.".format(filename),
                     lineno=self.lineno
                 )]
-
         else:
             return [self.state_machine.reporter.warning(
                 "Ignoring 'drawio' directive without argument.",
@@ -105,7 +110,10 @@ class DrawIOBase(SphinxDirective):
         source_path = Path(builder.env.srcdir)
         document_path = source_path / builder.env.docname
         nodes = super().run()
-        image = self._get_image_node(nodes)
+        for node in traverse(nodes):
+            if isinstance(node, docutils_image):
+                image = node
+                break
         image["classes"].append("drawio")
         image["uri"] = os.path.relpath(export_path, document_path.parent)
         return nodes
@@ -115,21 +123,10 @@ class DrawIOImage(DrawIOBase, Image):
     option_spec = Image.option_spec.copy()
     option_spec.update(DrawIOBase.option_spec)
 
-    @staticmethod
-    def _get_image_node(nodes):
-        image, = nodes                   # TODO: test
-        return image
-
 
 class DrawIOFigure(DrawIOBase, Figure):
     option_spec = Figure.option_spec.copy()
     option_spec.update(DrawIOBase.option_spec)
-
-    @staticmethod
-    def _get_image_node(nodes):
-        figure, = nodes                  # TODO: test
-        image, *caption = figure         # TODO: test
-        return image
 
 
 OPTIONAL_UNIQUES = {
