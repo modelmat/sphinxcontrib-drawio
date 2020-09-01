@@ -81,20 +81,13 @@ class DrawIOBase(SphinxDirective):
     }
     
     def run(self) -> List[Node]:
-        if self.arguments:
-            rel_filename, filename = self.env.relfn2path(self.arguments[0])
-            self.env.note_dependency(rel_filename)
-            if not os.path.exists(filename):
-                return [self.state.document.reporter.warning(
-                    "External draw.io file {} not found.".format(filename),
-                    lineno=self.lineno
-                )]
-        else:
-            return [self.state_machine.reporter.warning(
-                "Ignoring 'drawio' directive without argument.",
-                line=self.lineno,
+        rel_filename, filename = self.env.relfn2path(self.arguments[0])
+        self.env.note_dependency(rel_filename)
+        if not os.path.exists(filename):
+            return [self.state.document.reporter.warning(
+                "External draw.io file {} not found.".format(filename),
+                lineno=self.lineno
             )]
-
         builder = self.env.app.builder
         builder_export_format = builder.config.drawio_builder_export_format
         try:
