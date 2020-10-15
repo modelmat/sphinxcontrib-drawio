@@ -15,7 +15,7 @@ from sphinx.builders import Builder
 from sphinx.config import Config, ENUM
 from sphinx.directives.patches import Figure
 from sphinx.errors import SphinxError
-from sphinx.util import logging, ensuredir
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
@@ -68,7 +68,7 @@ def traverse(nodes):
   for node in nodes:
     yield node
     yield from traverse(node.children)
-    
+
 
 class DrawIOBase(SphinxDirective):
     option_spec = {
@@ -79,7 +79,7 @@ class DrawIOBase(SphinxDirective):
         "export-width":  directives.positive_int,
         "export-height":  directives.positive_int,
     }
-    
+
     def run(self) -> List[Node]:
         rel_filename, filename = self.env.relfn2path(self.arguments[0])
         self.env.note_dependency(rel_filename)
@@ -98,17 +98,15 @@ class DrawIOBase(SphinxDirective):
                            f"'drawio_builder_export_format'. Using "
                            f"'{FALLBACK_EXPORT_FORMAT}' as a fall-back.")
             export_format = FALLBACK_EXPORT_FORMAT
-        export_path = drawio_export(builder, self.options, filename,
-                                    export_format)
-        source_path = Path(builder.env.srcdir)
-        document_path = source_path / builder.env.docname
+        export_relpath = drawio_export(builder, self.options, filename,
+                                       export_format)
         nodes = super().run()
         for node in traverse(nodes):
             if isinstance(node, docutils_image):
                 image = node
                 break
         image["classes"].append("drawio")
-        image["uri"] = os.path.relpath(export_path, document_path.parent)
+        image["uri"] = '/' + str(export_relpath)
         return nodes
 
 
@@ -156,15 +154,14 @@ def drawio_export(builder: Builder, options: dict, in_filename: str,
     )
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
-    export_dir = Path(builder.srcdir) / ".drawio" / sha_key
-    ensuredir(export_dir)
     filename = Path(input_stem).with_suffix('.' + output_format)
-    export_path = export_dir / filename
-    export_relpath = export_path.relative_to(builder.srcdir)
+    export_relpath = Path(".drawio") / sha_key / filename
+    export_abspath = Path(builder.srcdir) / export_relpath
+    export_abspath.parent.mkdir(parents=True, exist_ok=True)
 
-    if (export_path.exists()
-            and export_path.stat().st_mtime > input_abspath.stat().st_mtime):
-        return export_path
+    if (export_abspath.exists()
+            and export_abspath.stat().st_mtime > input_abspath.stat().st_mtime):
+        return export_relpath
 
     if builder.config.drawio_binary_path:
         binary_path = builder.config.drawio_binary_path
@@ -199,7 +196,7 @@ def drawio_export(builder: Builder, options: dict, in_filename: str,
         "--format",
         output_format,
         "--output",
-        str(export_path),
+        str(export_abspath),
         in_filename,
     ]
 
@@ -214,12 +211,12 @@ def drawio_export(builder: Builder, options: dict, in_filename: str,
     try:
         ret = subprocess.run(drawio_args, stderr=subprocess.PIPE,
                              stdout=subprocess.PIPE, check=True, env=new_env)
-        if not export_path.exists():
+        if not export_abspath.exists():
             raise DrawIOError("draw.io did not produce an output file:"
                               "\n[stderr]\n{}\n[stdout]\n{}"
                               .format(ret.stderr, ret.stdout))
         logger.info(f"(drawio) '{input_relpath}' -> '{export_relpath}'")
-        return export_path
+        return export_relpath
     except OSError as exc:
         raise DrawIOError("draw.io ({}) exited with error:\n{}"
                           .format(" ".join(drawio_args), exc))
