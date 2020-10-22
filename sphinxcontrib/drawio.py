@@ -19,7 +19,6 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
-from . import __version__
 from .old_drawio import (DrawIONode, DrawIO,
                          render_drawio_html, render_drawio_latex)
 
@@ -291,4 +290,4 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.connect("config-inited", on_config_inited)
     app.add_css_file("drawio.css")
 
-    return {"version": __version__, "parallel_read_safe": True}
+    return {"parallel_read_safe": True}
