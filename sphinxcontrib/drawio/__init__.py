@@ -19,10 +19,11 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
-from . import __version__
-from .old_drawio import (DrawIONode, DrawIO,
+from .deprecated import (DrawIONode, DrawIO,
                          render_drawio_html, render_drawio_latex)
 
+
+__version__ = "0.0.10"
 
 logger = logging.getLogger(__name__)
 
