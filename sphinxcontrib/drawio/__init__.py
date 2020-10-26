@@ -23,7 +23,7 @@ from .deprecated import (DrawIONode, DrawIO,
                          render_drawio_html, render_drawio_latex)
 
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 logger = logging.getLogger(__name__)
 
