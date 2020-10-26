@@ -1,0 +1,7 @@
+include *.txt
+include LICENSE
+recursive-include sphinxcontrib *.css
+recursive-include tests *.drawio
+recursive-include tests *.py
+recursive-include tests *.rst
+include .circleci/config.yml
