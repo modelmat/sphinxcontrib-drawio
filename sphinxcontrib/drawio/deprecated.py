@@ -23,7 +23,6 @@ __all__ = ["DrawIONode", "DrawIO", "render_drawio_html", "render_drawio_latex"]
 logger = logging.getLogger(__name__)
 
 VALID_OUTPUT_FORMATS = ("png", "jpg", "svg")
-X_DISPLAY_NUMBER = 1
 
 
 def is_headless(config: Config):
@@ -194,8 +193,8 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
     cwd = os.path.dirname(os.path.join(self.builder.srcdir, doc_name))
 
     new_env = os.environ.copy()
-    if is_headless(self.config):
-        new_env["DISPLAY"] = ":{}".format(X_DISPLAY_NUMBER)
+    if self.config._display:
+        new_env["DISPLAY"] = ":{}".format(self.config._display)
 
     try:
         ret = subprocess.run(drawio_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
