@@ -1,10 +1,12 @@
 import os
 import os.path
 import platform
-import signal
 import subprocess
 from hashlib import sha1
 from pathlib import Path
+from subprocess import Popen, PIPE
+from tempfile import TemporaryFile
+from time import sleep
 from typing import Dict, Any, List
 
 from docutils.nodes import Node, image as docutils_image
@@ -28,7 +30,6 @@ __version__ = "0.0.11"
 logger = logging.getLogger(__name__)
 
 VALID_OUTPUT_FORMATS = ("png", "jpg", "svg", "pdf")
-X_DISPLAY_NUMBER = 1
 
 
 def is_headless(config: Config):
@@ -36,16 +37,10 @@ def is_headless(config: Config):
         if platform.system() != "Linux":
             # Xvfb can only run on Linux
             return False
-
-        # DISPLAY will exist if an X-server is running.
-        if os.getenv("DISPLAY"):
-            return False
-        else:
-            return True
-
+        # DISPLAY will exist if an X-server is running
+        return False if os.getenv("DISPLAY") else True
     elif isinstance(config.drawio_headless, bool):
         return config.drawio_headless
-
     # We should never reach this point as Sphinx ensures the config options
 
 
@@ -207,12 +202,12 @@ def drawio_export(builder: Builder, options: dict, in_filename: str,
         drawio_args.append("--no-sandbox")
 
     new_env = os.environ.copy()
-    if is_headless(builder.config):
-        new_env["DISPLAY"] = ":{}".format(X_DISPLAY_NUMBER)
+    if builder.config._display:
+        new_env["DISPLAY"] = ":{}".format(builder.config._display)
 
     try:
-        ret = subprocess.run(drawio_args, stderr=subprocess.PIPE,
-                             stdout=subprocess.PIPE, check=True, env=new_env)
+        ret = subprocess.run(drawio_args, stderr=PIPE, stdout=PIPE,
+                             check=True, env=new_env)
         if not export_abspath.exists():
             raise DrawIOError("draw.io did not produce an output file:"
                               "\n[stderr]\n{}\n[stdout]\n{}"
@@ -230,16 +225,26 @@ def drawio_export(builder: Builder, options: dict, in_filename: str,
 
 def on_config_inited(app: Sphinx, config: Config) -> None:
     if is_headless(config):
-        process = subprocess.Popen(["Xvfb", ":{}".format(X_DISPLAY_NUMBER), "-screen", "0", "1280x768x16"],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        config.xvfb_pid = process.pid
-
-        if process.poll() is not None:
-            raise OSError("Failed to start Xvfb process"
-                          "\n[stdout]\n{}\n[stderr]{}".format(*process.communicate()))
-
+        logger.info("running in headless mode, starting Xvfb")
+        with TemporaryFile() as fp:
+            fd = fp.fileno()
+            xvfb = Popen(["Xvfb", "-displayfd", str(fd), "-screen",
+                          "0", "1280x768x16"], pass_fds=(fd, ),
+                         stdout=PIPE, stderr=PIPE)
+            if xvfb.poll() is not None:
+                raise OSError("Failed to start Xvfb process"
+                              "\n[stdout]\n{}\n[stderr]{}"
+                              .format(*xvfb.communicate()))
+            while fp.tell() == 0:
+                sleep(0.01)   # wait for Xvfb to start up
+            fp.seek(0)
+            config._xvfb = xvfb
+            config._display = fp.read().decode('ascii').strip()
+        logger.info("Xvfb is running on display :{}".format(config._display))
     else:
         logger.info("running in non-headless mode, not starting Xvfb")
+        config._xvfb = None
+        config._display = None
 
 
 def on_build_finished(app: Sphinx, exc: Exception) -> None:
@@ -249,9 +254,12 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         dst = os.path.join(app.outdir, "_static")
         copy_asset(src, dst)
 
-    if is_headless(app.builder.config):
-        os.kill(app.builder.config.xvfb_pid, signal.SIGTERM)
-        os.waitid(os.P_PID, app.builder.config.xvfb_pid, os.WEXITED)
+    if app.config._xvfb:
+        app.config._xvfb.terminate()
+        stdout, stderr = app.config._xvfb.communicate()
+        if app.config._xvfb.poll() != 0:
+            raise OSError("Encountered an issue while terminating Xvfb"
+                          "\n[stdout]\n{}\n[stderr]{}".format(stdout, stderr))
 
 
 FALLBACK_EXPORT_FORMAT = "png"
