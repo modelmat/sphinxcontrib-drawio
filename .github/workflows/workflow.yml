@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - master
-      - github-actions
     tags:
       - '*'
   create:
@@ -56,7 +55,7 @@ jobs:
   pypi-release:
     needs: test-extension
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/tags/')
+    if: contains(github.ref, 'refs/tags/') && github.repository_owner	== 'Modelmat'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -78,6 +77,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
-          password: ${{ secrets.pypi_password }}
-          repository_url: https://test.pypi.org/legacy/
-# todo revert and fix tags only pushes. check pypi test.
+          password: ${{ secrets.pypi_token }}
