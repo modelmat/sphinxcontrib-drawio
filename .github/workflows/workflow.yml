@@ -54,7 +54,7 @@ jobs:
   pypi-release:
     needs: test-extension
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/tags/') && github.repository_owner	== 'Modelmat'
+    if: contains(github.ref, 'refs/tags/')#&& github.repository_owner == 'Modelmat'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -77,3 +77,4 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
+          repository_url: https://test.pypi.org/simple/
