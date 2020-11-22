@@ -44,7 +44,7 @@ def is_headless(config: Config):
 
 
 class DrawIOError(SphinxError):
-    category = 'DrawIO Error'
+    category = "DrawIO Error"
 
 
 def align_spec(argument: Any) -> str:
@@ -91,16 +91,20 @@ class DrawIO(SphinxDirective):
             rel_filename, filename = self.env.relfn2path(self.arguments[0])
             self.env.note_dependency(rel_filename)
             if not os.path.exists(filename):
-                return [self.state.document.reporter.warning(
-                    "External draw.io file {} not found.".format(filename),
-                    lineno=self.lineno
-                )]
+                return [
+                    self.state.document.reporter.warning(
+                        "External draw.io file {} not found.".format(filename),
+                        lineno=self.lineno,
+                    )
+                ]
 
         else:
-            return [self.state_machine.reporter.warning(
-                "Ignoring 'drawio' directive without argument.",
-                line=self.lineno,
-            )]
+            return [
+                self.state_machine.reporter.warning(
+                    "Ignoring 'drawio' directive without argument.",
+                    line=self.lineno,
+                )
+            ]
 
         node = DrawIONode()
         node["filename"] = filename
@@ -108,21 +112,30 @@ class DrawIO(SphinxDirective):
         node["doc_name"] = self.env.docname
 
         self.add_name(node)
-        return [node,
-                self.state_machine.reporter.warning(
-                  "The 'drawio' directive is deprecated. Use the 'drawio-image'"
-                  " directive instead.", line=self.lineno,
-                )]
+        return [
+            node,
+            self.state_machine.reporter.warning(
+                "The 'drawio' directive is deprecated. Use the 'drawio-image'"
+                " directive instead.",
+                line=self.lineno,
+            ),
+        ]
 
 
-def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
-                  default_output_format: str) -> str:
+def render_drawio(
+    self: SphinxTranslator,
+    node: DrawIONode,
+    in_filename: str,
+    default_output_format: str,
+) -> str:
     """Render drawio file into an output image file."""
 
     page_index = str(node["config"].get("page-index", 0))
     output_format = node["config"].get("format") or default_output_format
     scale = str(node["config"].get("scale", self.config.drawio_default_scale))
-    transparent = node["config"].get("transparency", self.config.drawio_default_transparency)
+    transparent = node["config"].get(
+        "transparency", self.config.drawio_default_transparency
+    )
     no_sandbox = self.config.drawio_no_sandbox
 
     # Any directive options which would change the output file would go here
@@ -133,17 +146,17 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         page_index,
         scale,
         output_format,
-        *[str(node["config"].get(option)) for option in DrawIO.optional_uniques]
+        *[str(node["config"].get(option)) for option in DrawIO.optional_uniques],
     )
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
     filename = "drawio-{}.{}".format(sha_key, default_output_format)
     file_path = posixpath.join(self.builder.imgpath, filename)
-    out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir,
-                                 filename)
+    out_file_path = os.path.join(self.builder.outdir, self.builder.imagedir, filename)
 
-    if (os.path.isfile(out_file_path)
-            and getmtime(in_filename) < getmtime(out_file_path)):
+    if os.path.isfile(out_file_path) and getmtime(in_filename) < getmtime(
+        out_file_path
+    ):
         return file_path
 
     ensuredir(os.path.dirname(out_file_path))
@@ -197,20 +210,29 @@ def render_drawio(self: SphinxTranslator, node: DrawIONode, in_filename: str,
         new_env["DISPLAY"] = ":{}".format(self.config._display)
 
     try:
-        ret = subprocess.run(drawio_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                             cwd=cwd, check=True, env=new_env)
+        ret = subprocess.run(
+            drawio_args,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            cwd=cwd,
+            check=True,
+            env=new_env,
+        )
         if not os.path.isfile(out_file_path):
-            raise DrawIOError("draw.io did not produce an output file:"
-                              "\n[stderr]\n{}\n[stdout]\n{}"
-                              .format(ret.stderr, ret.stdout))
+            raise DrawIOError(
+                "draw.io did not produce an output file:"
+                "\n[stderr]\n{}\n[stdout]\n{}".format(ret.stderr, ret.stdout)
+            )
         return file_path
     except OSError as exc:
-        raise DrawIOError("draw.io ({}) exited with error:\n{}"
-                          .format(" ".join(drawio_args), exc))
+        raise DrawIOError(
+            "draw.io ({}) exited with error:\n{}".format(" ".join(drawio_args), exc)
+        )
     except subprocess.CalledProcessError as exc:
-        raise DrawIOError("draw.io ({}) exited with error:\n[stderr]\n{}"
-                          "\n[stdout]\n{}".format(" ".join(drawio_args),
-                                                  exc.stderr, exc.stdout))
+        raise DrawIOError(
+            "draw.io ({}) exited with error:\n[stderr]\n{}"
+            "\n[stdout]\n{}".format(" ".join(drawio_args), exc.stderr, exc.stdout)
+        )
 
 
 def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
@@ -224,22 +246,27 @@ def render_drawio_html(self: HTMLTranslator, node: DrawIONode) -> None:
 
     alt = node["config"].get("alt", file_path)
     if "align" in node["config"]:
-        self.body.append('<div align="{0}" class="align-{0}">'.format(node["config"]["align"]))
+        self.body.append(
+            '<div align="{0}" class="align-{0}">'.format(node["config"]["align"])
+        )
 
     if output_format == "svg":
         self.body.append('<div class="drawio">')
-        self.body.append('<object data="{}" type="image/svg+xml"'
-                         'class="drawio">\n'.format(file_path))
+        self.body.append(
+            '<object data="{}" type="image/svg+xml"'
+            'class="drawio">\n'.format(file_path)
+        )
         self.body.append('<p class="warning">{}</p>'.format(alt))
-        self.body.append('</object></div>\n')
+        self.body.append("</object></div>\n")
     else:
         self.body.append('<div class="drawio">')
-        self.body.append('<img src="{}" alt="{}" class="drawio" />'
-                         .format(file_path, alt))
-        self.body.append('</div>')
+        self.body.append(
+            '<img src="{}" alt="{}" class="drawio" />'.format(file_path, alt)
+        )
+        self.body.append("</div>")
 
     if "align" in node["config"]:
-        self.body.append('</div>\n')
+        self.body.append("</div>\n")
 
     raise nodes.SkipNode
 

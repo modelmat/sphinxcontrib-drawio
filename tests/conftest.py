@@ -64,7 +64,7 @@ def content(app: Sphinx):
     app.build()
     yield app
 
-    
+
 @pytest.fixture()
 def make_app_with_local_user_config(make_app):
     def make(*args, **kwargs):
@@ -101,10 +101,8 @@ def legacy_tex_images(content: Sphinx) -> List[Path]:
 def tex_images(content: Sphinx) -> List[Path]:
     tex = (content.outdir / "python.tex").text()
     matches = re.finditer(r"\\sphinxincludegraphics{{(.*)}\.pdf}", tex)
-    return [content.outdir / (m.group(1) + '.pdf') for m in matches]
+    return [content.outdir / (m.group(1) + ".pdf") for m in matches]
 
 
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "sphinx"
-    )
+    config.addinivalue_line("markers", "sphinx")
