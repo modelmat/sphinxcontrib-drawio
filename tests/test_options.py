@@ -11,9 +11,12 @@ from sphinx.util.images import get_image_size
 # deprecated drawio directive test
 @pytest.mark.sphinx("html", testroot="simple")
 def test_simple(directives: List[Tag]):
-    assert directives[0].decode() == '<img alt="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png" ' \
-                                     'class="drawio" src="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png' \
-                                     '"/>'
+    assert (
+        directives[0].decode()
+        == '<img alt="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png" '
+        'class="drawio" src="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png'
+        '"/>'
+    )
 
 
 @pytest.mark.sphinx("html", testroot="page-index")
@@ -100,7 +103,7 @@ def test_transparency():
 
 @pytest.mark.sphinx("html", testroot="image")
 def test_image(directives: List[Tag]):
-    img, = directives
+    (img,) = directives
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
@@ -121,13 +124,13 @@ def test_figure(content: Sphinx, directives: List[Tag]):
         image_path = content.outdir / img["src"]
         assert get_image_size(image_path) == size
         div = img.parent
-        assert div.name == 'div'
+        assert div.name == "div"
         assert "figure" in div["class"]
 
 
 @pytest.mark.sphinx("html", testroot="reference")
 def test_reference(directives: List[Tag]):
-    img, = directives
+    (img,) = directives
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
