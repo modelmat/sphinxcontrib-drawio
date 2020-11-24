@@ -89,6 +89,15 @@ This config option controls the export file format for each Sphinx builder. It
 accepts a dictionary mapping builder names to image formats. Accepted values for
 the latter are `"png"`, `"jpg"`, or `"svg"`.
 
+### Output directory
+- *Formal Name*: `drawio_builder_export_directory`
+- *Default Value*: `"srcdir"`
+- *Possible Values*: `"srcdir"` or `"outdir"`
+
+This config option controls where the generated files are exported to.
+The `srcdir` (default) mode will create a .drawio directory in your source directory.
+The `outdir` mode will create the .drawio directoy in the sphinx output directory.
+
 ### Default Export Scale
 - *Formal Name*: `drawio_default_export_scale`
 - *Default Value*: `100`

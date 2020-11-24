@@ -1,0 +1,1 @@
+.. drawio-image:: box.drawio
