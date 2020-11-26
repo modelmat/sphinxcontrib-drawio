@@ -61,9 +61,9 @@ def boolean_spec(argument: Any) -> bool:
 
 
 def traverse(nodes):
-  for node in nodes:
-    yield node
-    yield from traverse(node.children)
+    for node in nodes:
+        yield node
+        yield from traverse(node.children)
 
 
 class DrawIOBase(SphinxDirective):
@@ -281,6 +281,7 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
                 "\n[stdout]\n{}\n[stderr]{}".format(stdout, stderr)
             )
 
+
 FALLBACK_EXPORT_FORMAT = "png"
 DEFAULT_BUILDER_EXPORT_FORMAT = {
     "html": "svg",
@@ -295,8 +296,9 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_config_value(
         "drawio_builder_export_format", DEFAULT_BUILDER_EXPORT_FORMAT, "html", dict
     )
-    app.add_config_value("drawio_builder_export_directory", "srcdir", "html",
-                         ENUM("srcdir", "outdir"))
+    app.add_config_value(
+        "drawio_builder_export_directory", "srcdir", "html", ENUM("srcdir", "outdir")
+    )
     app.add_config_value("drawio_default_export_scale", 100, "html")
     # noinspection PyTypeChecker
     app.add_config_value(
@@ -316,9 +318,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_config_value(
         "drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS)
     )
-    app.add_config_value(
-        "drawio_default_scale", 1, "html"
-    )
+    app.add_config_value("drawio_default_scale", 1, "html")
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
     app.connect("config-inited", on_config_inited)
