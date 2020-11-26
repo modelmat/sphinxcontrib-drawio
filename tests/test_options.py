@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 import os
+import tempfile
 
 import pytest
 
@@ -105,24 +106,26 @@ def test_transparency():
 @pytest.mark.sphinx("html", testroot="image")
 def test_image(content: Sphinx, directives: List[Tag]):
     (img,) = directives
-    srcdir = str(content.builder.srcdir)
+    outdir = str(content.builder.outdir)
     image_path = list(content.builder.images)[0]
-    assert image_path.startswith(srcdir + os.sep) == True
+    assert image_path.startswith(outdir + os.sep)
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
     assert img["class"] == ["drawio"]
 
+
 @pytest.mark.sphinx("html", testroot="outdir")
 def test_outdir(content: Sphinx, directives: List[Tag]):
     (img,) = directives
-    outdir = str(content.builder.outdir)
     image_path = list(content.builder.images)[0]
-    assert image_path.startswith(outdir + os.sep) == True
+    outdir = os.path.abspath(tempfile.gettempdir() + "/drawio_outdir_test")
+    assert image_path.startswith(outdir + os.sep)
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
     assert img["class"] == ["drawio"]
+
 
 @pytest.mark.sphinx("html", testroot="figure")
 def test_figure(content: Sphinx, directives: List[Tag]):

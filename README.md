@@ -90,13 +90,18 @@ accepts a dictionary mapping builder names to image formats. Accepted values for
 the latter are `"png"`, `"jpg"`, or `"svg"`.
 
 ### Output directory
-- *Formal Name*: `drawio_builder_export_directory`
-- *Default Value*: `"srcdir"`
-- *Possible Values*: `"srcdir"` or `"outdir"`
+- *Formal Name*: `drawio_export_directory`
+- *Default Value*: `None`
 
 This config option controls where the generated files are exported to.
-The `srcdir` (default) mode will create a .drawio directory in your source directory.
-The `outdir` mode will create the .drawio directoy in the sphinx output directory.
+Both relative(relative to the current working directory) and absolute paths
+are supported.
+
+If not set all files are generated into the builders output directory
+e.g. `_build/html/.drawio/*`
+
+This option might be beneficial to save conversion time when using multiple
+builders with the same output format.
 
 ### Default Export Scale
 - *Formal Name*: `drawio_default_export_scale`

@@ -158,10 +158,11 @@ def drawio_export(
     sha_key = sha1(hash_key.encode()).hexdigest()
     filename = Path(input_stem).with_suffix("." + output_format)
     export_relpath = Path(".drawio") / sha_key / filename
-    if builder.config.drawio_builder_export_directory == "outdir":
-        export_abspath = Path(builder.outdir) / export_relpath
+    if builder.config.drawio_export_directory:
+        export_abspath = Path(builder.config.drawio_export_directory) / export_relpath
+        export_abspath = export_abspath.absolute()
     else:
-        export_abspath = Path(builder.srcdir) / export_relpath
+        export_abspath = Path(builder.outdir) / export_relpath
     export_abspath.parent.mkdir(parents=True, exist_ok=True)
 
     if (
@@ -296,9 +297,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_config_value(
         "drawio_builder_export_format", DEFAULT_BUILDER_EXPORT_FORMAT, "html", dict
     )
-    app.add_config_value(
-        "drawio_builder_export_directory", "srcdir", "html", ENUM("srcdir", "outdir")
-    )
+    app.add_config_value("drawio_export_directory", None, "html")
     app.add_config_value("drawio_default_export_scale", 100, "html")
     # noinspection PyTypeChecker
     app.add_config_value(
