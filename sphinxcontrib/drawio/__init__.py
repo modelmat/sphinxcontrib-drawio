@@ -157,12 +157,12 @@ def drawio_export(
     hash_key = "\n".join(unique_values)
     sha_key = sha1(hash_key.encode()).hexdigest()
     filename = Path(input_stem).with_suffix("." + output_format)
-    export_relpath = Path(".drawio") / sha_key / filename
+    export_relpath = Path(sha_key) / filename
     if builder.config.drawio_export_directory:
         export_abspath = Path(builder.config.drawio_export_directory) / export_relpath
         export_abspath = export_abspath.absolute()
     else:
-        export_abspath = Path(builder.outdir) / export_relpath
+        export_abspath = Path(builder.outdir) / "drawio" / export_relpath
     export_abspath.parent.mkdir(parents=True, exist_ok=True)
 
     if (

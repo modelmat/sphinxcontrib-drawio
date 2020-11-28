@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 import os
+import shutil
 import tempfile
 
 import pytest
@@ -106,9 +107,9 @@ def test_transparency():
 @pytest.mark.sphinx("html", testroot="image")
 def test_image(content: Sphinx, directives: List[Tag]):
     (img,) = directives
-    outdir = str(content.builder.outdir)
+    outdir = content.builder.outdir / "drawio" + os.sep
     image_path = list(content.builder.images)[0]
-    assert image_path.startswith(outdir + os.sep)
+    assert image_path.startswith(outdir)
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
@@ -119,8 +120,24 @@ def test_image(content: Sphinx, directives: List[Tag]):
 def test_outdir(content: Sphinx, directives: List[Tag]):
     (img,) = directives
     image_path = list(content.builder.images)[0]
-    outdir = os.path.abspath(tempfile.gettempdir() + "/drawio_outdir_test")
-    assert image_path.startswith(outdir + os.sep)
+    outdir = os.path.abspath(tempfile.gettempdir() + "/drawio_outdir_test") + os.sep
+    assert image_path.startswith(outdir)
+    assert img.name == "img"
+    assert img["src"] == "_images/box.svg"
+    assert img["alt"] == "_images/box.svg"
+    assert img["class"] == ["drawio"]
+
+
+@pytest.mark.sphinx("html", testroot="outdir-relative")
+def test_outdir_relative(content: Sphinx, directives: List[Tag]):
+    outdir = os.path.abspath("_relative_drawio_outdir_test") + os.sep
+    # remove the generated directory again
+    # (unlike the other tests this directory is created
+    # inside your working directory - not the pytest temp dir)
+    shutil.rmtree(outdir)
+    (img,) = directives
+    image_path = list(content.builder.images)[0]
+    assert image_path.startswith(outdir)
     assert img.name == "img"
     assert img["src"] == "_images/box.svg"
     assert img["alt"] == "_images/box.svg"
