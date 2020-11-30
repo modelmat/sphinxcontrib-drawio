@@ -94,7 +94,7 @@ the latter are `"png"`, `"jpg"`, or `"svg"`.
 - *Default Value*: `None`
 
 This config option controls where the generated files are exported to.
-Both relative(to the current working directory) and absolute paths
+Both relative (to the current working directory) and absolute paths
 are supported.
 
 This can be useful to reduce build times with many drawio files across
