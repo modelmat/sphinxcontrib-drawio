@@ -25,7 +25,7 @@ def test_page_index(images: List[Path]):
     assert images[1].name == "pages1.png"
     assert images[2].name == "pages2.png"
     assert images[3].name == "pages.png"
-    assert get_image_size(images[0]) == (124, 63)
+    assert get_image_size(images[0]) == (125, 64)
     assert get_image_size(images[1]) == (64, 63)
     assert get_image_size(images[2]) == (64, 63)
     assert get_image_size(images[3]) == (124, 63)
@@ -64,17 +64,16 @@ def test_align(directives: List[Tag]):
 # noinspection PyTypeChecker
 @pytest.mark.sphinx("html", testroot="width-height")
 def test_width_height(images: List[Path]):
-    # https://github.com/jgraph/drawio-desktop/issues/254
     # Widths and heights are not exact
 
-    assert get_image_size(images[0]) == (103, 53)
-    assert get_image_size(images[1]) == (202, 102)
-    assert get_image_size(images[2]) == (1007, 511)
+    assert get_image_size(images[0])[0] == 100
+    assert get_image_size(images[1])[1] = 100
+    assert get_image_size(images[2])[0] == 1000
 
     # deprecated drawio directive
-    assert get_image_size(images[3]) == (103, 53)
-    assert get_image_size(images[4]) == (202, 102)
-    assert get_image_size(images[5]) == (1007, 511)
+    assert get_image_size(images[3])[0] == 100
+    assert get_image_size(images[4])[1] == 100
+    assert get_image_size(images[5])[0] == 1000
 
 
 # noinspection PyTypeChecker
@@ -87,7 +86,7 @@ def test_scale(images: List[Path]):
     assert get_image_size(images[0]) == (245, 124)
     assert get_image_size(images[1]) == (1217, 616)
     assert get_image_size(images[2]) == (64, 33)
-    assert get_image_size(images[3]) == (124, 63)
+    assert get_image_size(images[3]) == (125, 65) # check this works
     assert get_image_size(images[4]) == (610, 309)
 
     # deprecated drawio directive
