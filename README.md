@@ -1,17 +1,19 @@
 # sphinxcontrib-drawio
+
 Sphinx Extension adding the `drawio-image` and `drawio-figure` directives.
 These are equivalent to the standard `image` and `figure` directives, but
 accept the path to a `.drawio` file and additional options to control
-exporting of the diagram to a format suitable for the selected Sphinx builder. 
+exporting of the diagram to a suitable image format. 
 
 These directives replace the `drawio` directive which is now deprecated, and
 for which support will be dropped in version 1.0. Deprecation warnings are 
 output when a `drawio` directive is encountered. Please replace these with
 `drawio-image` orand `drawio-figure`, taking into account these differences:
 
-- the *drawio_output_format* conf.py option has been replaced by the 
-  *drawio_builder_export_format* option, where you can specify the export format
-  for each builder separately.
+- the *drawio_output_format* conf.py option has been removed; the draw.io
+  diagram is exported to the Sphinx builder's preferred image format (eg. SVG
+  for HTML, PDF for LaTeX). It can still be overridden for individual
+  `drawio-image` and `drawio-figure` directives; see below.
 - the *scale*, *width* and *height* options have been renamed, respectively, to
   *export-scale*, *export-width* and *export-height* so as not to conflict with
   the options inherited from the [image directive](https://docutils.sourceforge.io/docs/ref/rst/directives.html#image).
@@ -81,14 +83,6 @@ Setting the value to `True` will start a virtual X framebuffer through the
 
 Setting the value to `False` will run the `draw.io` binary as normal.
 
-### Output Format
-- *Formal Name*: `drawio_builder_export_format`
-- *Default Value*: `{"html": "svg", "latex": "pdf", "rinoh": "pdf"}`
-
-This config option controls the export file format for each Sphinx builder. It
-accepts a dictionary mapping builder names to image formats. Accepted values for
-the latter are `"png"`, `"jpg"`, or `"svg"`.
-
 ### Default Export Scale
 - *Formal Name*: `drawio_default_export_scale`
 - *Default Value*: `100`
@@ -152,9 +146,7 @@ These options apply to the image as exported by draw.io. Similarly,
 - *Default Value*: `"png"`
 - *Possible Values*: `"png"`, `"jpg"`, `"svg"` or `"pdf"`
 
-This option controls the output file format of *this specific* directive. It
-provides similar functionality to that of the `drawio_builder_export_format`
-config option (see above) but at an individual image level.
+This option controls the output file format of *this specific* directive.
 
 ### Page Index
 - *Formal Name*: `:page-index:`

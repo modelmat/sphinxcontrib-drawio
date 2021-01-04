@@ -9,14 +9,15 @@ from tempfile import TemporaryFile
 from time import sleep
 from typing import Dict, Any, List
 
+from docutils import nodes
 from docutils.nodes import Node, image as docutils_image
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 from sphinx.application import Sphinx
-from sphinx.builders import Builder
 from sphinx.config import Config, ENUM
 from sphinx.directives.patches import Figure
 from sphinx.errors import SphinxError
+from sphinx.transforms.post_transforms.images import ImageConverter, get_filename_for
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
@@ -77,35 +78,12 @@ class DrawIOBase(SphinxDirective):
     }
 
     def run(self) -> List[Node]:
-        rel_filename, filename = self.env.relfn2path(self.arguments[0])
-        self.env.note_dependency(rel_filename)
-        if not os.path.exists(filename):
-            return [
-                self.state.document.reporter.warning(
-                    "External draw.io file {} not found.".format(filename),
-                    lineno=self.lineno,
-                )
-            ]
-        builder = self.env.app.builder
-        builder_export_format = builder.config.drawio_builder_export_format
-        try:
-            export_format = builder_export_format[builder.name]
-        except KeyError:
-            logger.warning(
-                f"No export format specified for builder "
-                f"'{builder.name}' in "
-                f"'drawio_builder_export_format'. Using "
-                f"'{FALLBACK_EXPORT_FORMAT}' as a fall-back."
-            )
-            export_format = FALLBACK_EXPORT_FORMAT
-        export_relpath = drawio_export(builder, self.options, filename, export_format)
         nodes = super().run()
         for node in traverse(nodes):
             if isinstance(node, docutils_image):
                 image = node
                 break
         image["classes"].append("drawio")
-        image["uri"] = "/" + str(export_relpath)
         return nodes
 
 
@@ -125,113 +103,162 @@ OPTIONAL_UNIQUES = {
 }
 
 
-def drawio_export(
-    builder: Builder, options: dict, in_filename: str, default_output_format: str
-) -> str:
-    """Render drawio file into an output image file."""
-
-    page_index = str(options.get("page-index", 0))
-    output_format = options.get("format") or default_output_format
-    scale = str(
-        options.get("export-scale", builder.config.drawio_default_export_scale) / 100
-    )
-    transparent = options.get(
-        "transparency", builder.config.drawio_default_transparency
-    )
-    no_sandbox = builder.config.drawio_no_sandbox
-
-    input_abspath = Path(in_filename)
-    input_relpath = input_abspath.relative_to(builder.srcdir)
-    input_stem = input_abspath.stem
-
-    # Any directive options which would change the output file would go here
-    unique_values = (
-        # This ensures that the same file hash is generated no matter the build directory
-        # Mainly useful for pytest, as it creates a new build directory every time
-        str(input_relpath),
-        page_index,
-        scale,
-        "true" if transparent else "false",
-        *[str(options.get(option)) for option in OPTIONAL_UNIQUES],
-    )
-    hash_key = "\n".join(unique_values)
-    sha_key = sha1(hash_key.encode()).hexdigest()
-    filename = Path(input_stem).with_suffix("." + output_format)
-    export_relpath = Path(".drawio") / sha_key / filename
-    export_abspath = Path(builder.srcdir) / export_relpath
-    export_abspath.parent.mkdir(parents=True, exist_ok=True)
-
-    if (
-        export_abspath.exists()
-        and export_abspath.stat().st_mtime > input_abspath.stat().st_mtime
-    ):
-        return export_relpath
-
-    if builder.config.drawio_binary_path:
-        binary_path = builder.config.drawio_binary_path
-    elif platform.system() == "Windows":
-        binary_path = r"C:\Program Files\draw.io\draw.io.exe"
-    else:
-        binary_path = "/opt/draw.io/drawio"
-
-    scale_args = ["--scale", scale]
-    if output_format == "pdf" and float(scale) == 1.0:
-        # https://github.com/jgraph/drawio-desktop/issues/344 workaround
-        scale_args.clear()
-
-    extra_args = []
-    for option, drawio_arg in OPTIONAL_UNIQUES.items():
-        if option in options:
-            value = options[option]
-            extra_args.append("--{}".format(drawio_arg))
-            extra_args.append(str(value))
-
-    if transparent:
-        extra_args.append("--transparent")
-
-    drawio_args = [
-        binary_path,
-        "--export",
-        "--crop",
-        "--page-index",
-        page_index,
-        *scale_args,
-        *extra_args,
-        "--format",
-        output_format,
-        "--output",
-        str(export_abspath),
-        in_filename,
+class DrawIOConverter(ImageConverter):
+    conversion_rules = [
+        # automatic conversion based on the builder's supported image types
+        ("application/x-drawio", "image/png"),
+        ("application/x-drawio", "image/jpeg"),
+        ("application/x-drawio", "image/svg+xml"),
+        ("application/x-drawio", "application/pdf"),
+        # when the export format is explicitly defined
+        ("application/x-drawio-png", "image/png"),
+        ("application/x-drawio-jpg", "image/jpeg"),
+        ("application/x-drawio-svg", "image/svg+xml"),
+        ("application/x-drawio-pdf", "application/pdf"),
     ]
 
-    if no_sandbox:
-        # This may be needed for docker support, and it has to be the last argument to work.
-        drawio_args.append("--no-sandbox")
+    @property
+    def imagedir(self) -> str:
+        return os.path.join(self.app.doctreedir, "drawio")
 
-    new_env = os.environ.copy()
-    if builder.config._display:
-        new_env["DISPLAY"] = ":{}".format(builder.config._display)
+    def is_available(self) -> bool:
+        """Confirms the converter is available or not."""
+        return True
 
-    try:
-        ret = subprocess.run(
-            drawio_args, stderr=PIPE, stdout=PIPE, check=True, env=new_env
+    def guess_mimetypes(self, node: nodes.image) -> List[str]:
+        if "drawio" in node["classes"]:
+            format = node.get("format")
+            extra = "-{}".format(format) if format else ""
+            return ["application/x-drawio" + extra]
+        return [None]
+
+    def handle(self, node: nodes.image) -> None:
+        """Render drawio file into an output image file."""
+        _from, _to = self.get_conversion_rule(node)
+        if _from in node["candidates"]:
+            srcpath = node["candidates"][_from]
+        else:
+            srcpath = node["candidates"]["*"]
+
+        abs_srcpath = Path(self.app.srcdir) / srcpath
+        if not os.path.exists(abs_srcpath):
+            return
+
+        options = node.attributes
+        out_filename = get_filename_for(srcpath, _to)
+        destpath = self._drawio_export(abs_srcpath, options, out_filename)
+        if "*" in node["candidates"]:
+            node["candidates"]["*"] = destpath
+        else:
+            node["candidates"][_to] = destpath
+        node["uri"] = destpath
+
+        self.env.original_image_uri[destpath] = srcpath
+        self.env.images.add_file(self.env.docname, destpath)
+
+    def _drawio_export(self, input_abspath, options, out_filename):
+        builder = self.app.builder
+        input_relpath = input_abspath.relative_to(builder.srcdir)
+        input_stem = input_abspath.stem
+
+        page_index = str(options.get("page-index", 0))
+        scale = str(
+            options.get("export-scale", builder.config.drawio_default_export_scale)
+            / 100
         )
+        transparent = options.get(
+            "transparency", builder.config.drawio_default_transparency
+        )
+        no_sandbox = builder.config.drawio_no_sandbox
+
+        # Any directive options which would change the output file would go here
+        unique_values = (
+            # This ensures that the same file hash is generated no matter the build directory
+            # Mainly useful for pytest, as it creates a new build directory every time
+            str(input_relpath),
+            page_index,
+            scale,
+            "true" if transparent else "false",
+            *[str(options.get(option)) for option in OPTIONAL_UNIQUES],
+        )
+        hash_key = "\n".join(unique_values)
+        sha_key = sha1(hash_key.encode()).hexdigest()
+        export_abspath = Path(self.imagedir) / sha_key / out_filename
+        export_abspath.parent.mkdir(parents=True, exist_ok=True)
+        export_relpath = export_abspath.relative_to(builder.doctreedir)
+        output_format = export_abspath.suffix[1:]
+
+        if (
+            export_abspath.exists()
+            and export_abspath.stat().st_mtime > input_abspath.stat().st_mtime
+        ):
+            return export_abspath
+
+        if builder.config.drawio_binary_path:
+            binary_path = builder.config.drawio_binary_path
+        elif platform.system() == "Windows":
+            binary_path = r"C:\Program Files\draw.io\draw.io.exe"
+        else:
+            binary_path = "/opt/draw.io/drawio"
+
+        scale_args = ["--scale", scale]
+        if output_format == "pdf" and float(scale) == 1.0:
+            # https://github.com/jgraph/drawio-desktop/issues/344 workaround
+            scale_args.clear()
+
+        extra_args = []
+        for option, drawio_arg in OPTIONAL_UNIQUES.items():
+            if option in options:
+                value = options[option]
+                extra_args.append("--{}".format(drawio_arg))
+                extra_args.append(str(value))
+
+        if transparent:
+            extra_args.append("--transparent")
+
+        drawio_args = [
+            binary_path,
+            "--export",
+            "--crop",
+            "--page-index",
+            page_index,
+            *scale_args,
+            *extra_args,
+            "--format",
+            output_format,
+            "--output",
+            str(export_abspath),
+            str(input_abspath),
+        ]
+
+        if no_sandbox:
+            # This may be needed for docker support, and it has to be the last argument to work.
+            drawio_args.append("--no-sandbox")
+
+        new_env = os.environ.copy()
+        if builder.config._display:
+            new_env["DISPLAY"] = ":{}".format(builder.config._display)
+
+        logger.info(f"(drawio) '{input_relpath}' -> '{export_relpath}'")
+        try:
+            ret = subprocess.run(
+                drawio_args, stderr=PIPE, stdout=PIPE, check=True, env=new_env
+            )
+        except OSError as exc:
+            raise DrawIOError(
+                "draw.io ({}) exited with error:\n{}".format(" ".join(drawio_args), exc)
+            )
+        except subprocess.CalledProcessError as exc:
+            raise DrawIOError(
+                "draw.io ({}) exited with error:\n[stderr]\n{}"
+                "\n[stdout]\n{}".format(" ".join(drawio_args), exc.stderr, exc.stdout)
+            )
         if not export_abspath.exists():
             raise DrawIOError(
                 "draw.io did not produce an output file:"
                 "\n[stderr]\n{}\n[stdout]\n{}".format(ret.stderr, ret.stdout)
             )
-        logger.info(f"(drawio) '{input_relpath}' -> '{export_relpath}'")
-        return export_relpath
-    except OSError as exc:
-        raise DrawIOError(
-            "draw.io ({}) exited with error:\n{}".format(" ".join(drawio_args), exc)
-        )
-    except subprocess.CalledProcessError as exc:
-        raise DrawIOError(
-            "draw.io ({}) exited with error:\n[stderr]\n{}"
-            "\n[stdout]\n{}".format(" ".join(drawio_args), exc.stderr, exc.stdout)
-        )
+        return export_abspath
 
 
 def on_config_inited(app: Sphinx, config: Config) -> None:
@@ -279,20 +306,10 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
             )
 
 
-FALLBACK_EXPORT_FORMAT = "png"
-DEFAULT_BUILDER_EXPORT_FORMAT = {
-    "html": "svg",
-    "latex": "pdf",
-    "rinoh": "pdf",
-}
-
-
 def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_post_transform(DrawIOConverter)
     app.add_directive("drawio-image", DrawIOImage)
     app.add_directive("drawio-figure", DrawIOFigure)
-    app.add_config_value(
-        "drawio_builder_export_format", DEFAULT_BUILDER_EXPORT_FORMAT, "html", dict
-    )
     app.add_config_value("drawio_default_export_scale", 100, "html")
     # noinspection PyTypeChecker
     app.add_config_value(

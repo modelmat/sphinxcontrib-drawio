@@ -139,7 +139,7 @@ def test_reference(directives: List[Tag]):
 
 @pytest.mark.sphinx("html", testroot="warnings")
 def test_warnings(content: Sphinx, directives: List[Tag]):
-    assert len(directives) == 0
+    assert len(directives) == 1
     warnings = content._warning.getvalue()
     assert "1 argument(s) required, 0 supplied" in warnings
-    assert "missing.drawio not found" in warnings
+    assert "image file not readable: missing.drawio" in warnings
