@@ -97,11 +97,16 @@ This config option controls where the generated files are exported to.
 Both relative (to the current working directory) and absolute paths
 are supported.
 
-This can be useful to reduce build times with many drawio files across
-multiple sphinx build formats.
+This can reduce disk space usage and build times as the exported images
+can be reused among Sphinx builders, provided the builders use the same
+drawio export format.
 
 If not set all files are generated into the builders output directory
 e.g. `_build/html/drawio/*`
+
+This directory caches exported drawio diagrams to reduce Sphinx build times.
+The exported images in this directory are not directly referenced by the
+built documentation. The directory can be removed (cleaned up) safely.
 
 ### Default Export Scale
 - *Formal Name*: `drawio_default_export_scale`
