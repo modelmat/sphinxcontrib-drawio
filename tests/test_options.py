@@ -144,6 +144,7 @@ def test_warnings(content: Sphinx, directives: List[Tag]):
     warnings = content._warning.getvalue()
     assert "1 argument(s) required, 0 supplied" in warnings
     assert "image file not readable: missing.drawio" in warnings
+    assert '"gif" unknown; choose from "png", "jpg", "svg", or "pdf".' in warnings
 
 
 @pytest.mark.sphinx("html", testroot="bad-config")
