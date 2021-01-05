@@ -6,6 +6,7 @@ import pytest
 from bs4 import Tag
 from sphinx.application import Sphinx
 from sphinx.util.images import get_image_size
+from sphinxcontrib.drawio import DrawIOError
 
 
 # deprecated drawio directive test
@@ -143,3 +144,11 @@ def test_warnings(content: Sphinx, directives: List[Tag]):
     warnings = content._warning.getvalue()
     assert "1 argument(s) required, 0 supplied" in warnings
     assert "image file not readable: missing.drawio" in warnings
+
+
+@pytest.mark.sphinx("html", testroot="bad-config")
+def test_bad_config(app_with_local_user_config):
+    with pytest.raises(DrawIOError) as exc:
+        app_with_local_user_config.build()
+    (message,) = exc.value.args
+    assert message == "Invalid export format 'bmp' specified for builder 'html'"

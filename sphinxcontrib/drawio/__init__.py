@@ -117,6 +117,17 @@ class DrawIOConverter(ImageConverter):
         ("application/x-drawio-pdf", "application/pdf"),
     ]
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        builder_name = self.app.builder.name
+        format = self.config.drawio_builder_export_format.get(builder_name)
+        if format and format not in VALID_OUTPUT_FORMATS:
+            raise DrawIOError(
+                f"Invalid export format '{format}' specified for builder"
+                f" '{builder_name}'"
+            )
+        self._default_export_format = format
+
     @property
     def imagedir(self) -> str:
         return os.path.join(self.app.doctreedir, "drawio")
@@ -127,7 +138,7 @@ class DrawIOConverter(ImageConverter):
 
     def guess_mimetypes(self, node: nodes.image) -> List[str]:
         if "drawio" in node["classes"]:
-            format = node.get("format")
+            format = node.get("format") or self._default_export_format
             extra = "-{}".format(format) if format else ""
             return ["application/x-drawio" + extra]
         return [None]
@@ -310,6 +321,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     app.add_post_transform(DrawIOConverter)
     app.add_directive("drawio-image", DrawIOImage)
     app.add_directive("drawio-figure", DrawIOFigure)
+    app.add_config_value("drawio_builder_export_format", {}, "html", dict)
     app.add_config_value("drawio_default_export_scale", 100, "html")
     # noinspection PyTypeChecker
     app.add_config_value(

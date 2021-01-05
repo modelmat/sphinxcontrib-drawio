@@ -12,8 +12,10 @@ output when a `drawio` directive is encountered. Please replace these with
 
 - the *drawio_output_format* conf.py option has been removed; the draw.io
   diagram is exported to the Sphinx builder's preferred image format (eg. SVG
-  for HTML, PDF for LaTeX). It can still be overridden for individual
-  `drawio-image` and `drawio-figure` directives; see below.
+  for HTML, PDF for LaTeX). The *drawio_builder_export_format* configuration
+  variable allows setting another default export format for each builder. Note
+  that this can still be overridden for individual `drawio-image` and
+  `drawio-figure` directives. See below for details.
 - the *scale*, *width* and *height* options have been renamed, respectively, to
   *export-scale*, *export-width* and *export-height* so as not to conflict with
   the options inherited from the [image directive](https://docutils.sourceforge.io/docs/ref/rst/directives.html#image).
@@ -82,6 +84,19 @@ Setting the value to `True` will start a virtual X framebuffer through the
 `Xvfb` command before running any `draw.io` commands, and stop it afterwards.
 
 Setting the value to `False` will run the `draw.io` binary as normal.
+
+### Default Output Format
+- *Formal Name*: `drawio_builder_export_format`
+- *Default Value*: `{}`
+
+This config option controls the default export file format for each Sphinx
+builder. It accepts a dictionary mapping builder names to image formats. The
+builder name should match the name of a [Sphinx builder](https://www.sphinx-doc.org/en/master/usage/builders/index.html)
+(e.g., `"html"`, `"latex"`). Accepted values for the export format are `"png"`,
+`"jpg"`, `"svg"` and `"pdf"`. If no format is set for a given builder, its
+preferred image format is used, that is, the first format listed in a builder's
+_supported_image_types_ that draw.io is capable of exporting to (eg. SVG for
+HTML, PDF for LaTeX). 
 
 ### Default Export Scale
 - *Formal Name*: `drawio_default_export_scale`
