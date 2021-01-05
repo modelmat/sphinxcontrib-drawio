@@ -59,10 +59,15 @@ def rootdir():
 
 
 @pytest.fixture()
-def content(app: Sphinx):
+def app_with_local_user_config(app: Sphinx):
     _setup_local_user_config(app)
-    app.build()
     yield app
+
+
+@pytest.fixture()
+def content(app_with_local_user_config: Sphinx):
+    app_with_local_user_config.build()
+    yield app_with_local_user_config
 
 
 @pytest.fixture()
