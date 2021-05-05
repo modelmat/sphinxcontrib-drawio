@@ -157,7 +157,7 @@ class DrawIOConverter(ImageConverter):
 
         options = node.attributes
         out_filename = get_filename_for(srcpath, _to)
-        destpath = self._drawio_export(abs_srcpath, options, out_filename)
+        destpath = str(self._drawio_export(abs_srcpath, options, out_filename))
         if "*" in node["candidates"]:
             node["candidates"]["*"] = destpath
         else:
