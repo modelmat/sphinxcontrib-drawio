@@ -210,7 +210,9 @@ class DrawIOConverter(ImageConverter):
         elif platform.system() == "Windows":
             binary_path = r"C:\Program Files\draw.io\draw.io.exe"
         else:
-            binary_path = "/opt/draw.io/drawio"
+            binary_path = "/opt/drawio/drawio"
+            if not os.path.isfile(binary_path):
+                binary_path = "/opt/draw.io/drawio"
 
         scale_args = ["--scale", scale]
         if output_format == "pdf" and float(scale) == 1.0:
