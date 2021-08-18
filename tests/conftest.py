@@ -97,14 +97,14 @@ def images(content: Sphinx) -> List[Path]:
 
 @pytest.fixture()
 def legacy_tex_images(content: Sphinx) -> List[Path]:
-    tex = (content.outdir / "python.tex").text()
+    tex = (content.outdir / "python.tex").read_text()
     matches = re.finditer(r"\\sphinxincludegraphics\[\]{(.*?)}", tex)
     return [content.outdir / m.group(1) for m in matches]
 
 
 @pytest.fixture()
 def tex_images(content: Sphinx) -> List[Path]:
-    tex = (content.outdir / "python.tex").text()
+    tex = (content.outdir / "python.tex").read_text()
     matches = re.finditer(r"\\sphinxincludegraphics{{(.*)}\.pdf}", tex)
     return [content.outdir / (m.group(1) + ".pdf") for m in matches]
 

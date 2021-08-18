@@ -44,7 +44,7 @@ jobs:
           pip install -r dev-requirements.txt
       - name: Intall draw.io dependencies
         run: |
-          wget -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v12.6.5/draw.io-amd64-12.6.5.deb
+          wget -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v14.9.6/drawio-amd64-14.9.6.deb
           sudo apt install xvfb ./drawio.deb
       - name: Install Package
         run: |
