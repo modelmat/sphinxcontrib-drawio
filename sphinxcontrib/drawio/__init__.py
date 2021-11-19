@@ -2,6 +2,7 @@ import os
 import os.path
 import platform
 import subprocess
+import re
 from hashlib import sha1
 from pathlib import Path
 from subprocess import Popen, PIPE
@@ -199,6 +200,9 @@ class DrawIOConverter(ImageConverter):
         export_relpath = export_abspath.relative_to(builder.doctreedir)
         output_format = export_abspath.suffix[1:]
 
+        input_abspath_cygwin = None
+        export_abspath_cygwin = None
+
         if (
             export_abspath.exists()
             and export_abspath.stat().st_mtime > input_abspath.stat().st_mtime
@@ -209,6 +213,10 @@ class DrawIOConverter(ImageConverter):
             binary_path = builder.config.drawio_binary_path
         elif platform.system() == "Windows":
             binary_path = r"C:\Program Files\draw.io\draw.io.exe"
+        elif platform.system().startswith('CYGWIN_NT'):
+            binary_path = "/cygdrive/c/Program Files/draw.io/draw.io.exe"
+            export_abspath_cygwin = Path(re.sub('/cygdrive/(?P<letter>[a-z])/', '\g<letter>:/', self.imagedir, 1)) / sha_key / out_filename
+            input_abspath_cygwin = Path(re.sub('/cygdrive/(?P<letter>[a-z])/', '\g<letter>:/', str(input_abspath), 1))
         else:
             binary_path = "/opt/drawio/drawio"
             if not os.path.isfile(binary_path):
@@ -240,8 +248,8 @@ class DrawIOConverter(ImageConverter):
             "--format",
             output_format,
             "--output",
-            str(export_abspath),
-            str(input_abspath),
+            str(export_abspath_cygwin if export_abspath_cygwin is not None else export_abspath),
+            str(input_abspath_cygwin if input_abspath_cygwin is not None else input_abspath),
         ]
 
         if no_sandbox:
