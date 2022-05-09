@@ -269,7 +269,7 @@ class DrawIOConverter(ImageConverter):
         except subprocess.CalledProcessError as exc:
             raise DrawIOError(
                 "draw.io ({}) exited with error:\n[stderr]\n{}"
-                "\n[stdout]\n{}".format(" ".join(drawio_args), exc.stderr, exc.stdout)
+                "\n[stdout]\n{}\n[returncode]\n{}".format(" ".join(drawio_args), exc.stderr, exc.stdout, exc.returncode)
             )
         if not export_abspath.exists():
             raise DrawIOError(
