@@ -1,6 +1,7 @@
 import os
 import os.path
 import platform
+import shutil
 import subprocess
 from hashlib import sha1
 from pathlib import Path
@@ -205,14 +206,29 @@ class DrawIOConverter(ImageConverter):
         ):
             return export_abspath
 
+        drawio_in_path = shutil.which("drawio")
+        draw_dot_io_in_path = shutil.which("draw.io")
+        WINDOWS_PATH = r"C:\Program Files\draw.io\draw.io.exe"
+        MACOS_PATH = "/Applications/draw.io.app/Contents/MacOS/draw.io"
+        LINUX_PATH = "/opt/drawio/drawio"
+        LINUX_OLD_PATH = "/opt/draw.io/drawio"
+
         if builder.config.drawio_binary_path:
             binary_path = builder.config.drawio_binary_path
-        elif platform.system() == "Windows":
-            binary_path = r"C:\Program Files\draw.io\draw.io.exe"
+        elif drawio_in_path:
+            binary_path = drawio_in_path
+        elif draw_dot_io_in_path:
+            binary_path = draw_dot_io_in_path
+        elif platform.system() == "Windows" and os.path.isfile(WINDOWS_PATH):
+            binary_path = WINDOWS_PATH
+        elif platform.system() == "Darwin" and os.path.isfile(MACOS_PATH):
+            binary_path = MACOS_PATH
+        elif platform.system() == "Linux" and os.path.isfile(LINUX_PATH):
+            binary_path = LINUX_PATH
+        elif platform.system() == "Linux" and os.path.isfile(LINUX_OLD_PATH):
+            binary_path = LINUX_OLD_PATH
         else:
-            binary_path = "/opt/drawio/drawio"
-            if not os.path.isfile(binary_path):
-                binary_path = "/opt/draw.io/drawio"
+            raise DrawIOError("No drawio executable found")
 
         scale_args = ["--scale", scale]
         if output_format == "pdf" and float(scale) == 1.0:
