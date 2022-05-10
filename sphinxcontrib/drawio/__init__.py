@@ -217,6 +217,7 @@ class DrawIOConverter(ImageConverter):
         scale_args = ["--scale", scale]
         if output_format == "pdf" and float(scale) == 1.0:
             # https://github.com/jgraph/drawio-desktop/issues/344 workaround
+            # This is fixed now, but is left in for backwards compat.
             scale_args.clear()
 
         extra_args = []
