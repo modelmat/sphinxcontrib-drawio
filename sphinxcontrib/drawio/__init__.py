@@ -180,7 +180,7 @@ class DrawIOConverter(ImageConverter):
         transparent = options.get(
             "transparency", builder.config.drawio_default_transparency
         )
-        enable_logging = builder.config.drawio_enable_logging
+        enable_verbrose_electron = builder.config.drawio_enable_verbrose_electron
         no_sandbox = builder.config.drawio_no_sandbox
 
         # Any directive options which would change the output file would go here
@@ -246,7 +246,7 @@ class DrawIOConverter(ImageConverter):
             str(input_abspath),
         ]
 
-        if enable_logging:
+        if enable_verbrose_electron:
             drawio_args.append("--enable-logging")
 
         if no_sandbox:
@@ -345,7 +345,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     # noinspection PyTypeChecker
     app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
     # noinspection PyTypeChecker
-    app.add_config_value("drawio_enable_logging", False, "html", ENUM(True, False))
+    app.add_config_value("drawio_enable_verbrose_electron", True, "html", ENUM(True, False))
     app.add_config_value("drawio_no_sandbox", False, "html", ENUM(True, False))
 
     # deprecated

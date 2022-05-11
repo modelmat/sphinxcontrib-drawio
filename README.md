@@ -124,12 +124,13 @@ This will be overridden if the transparency is set for a individual diagram in
 the directive. If the output format isn't *png*, it will not affect the image
 exported.
 
-### Enable Logging
-- *Formal Name*: `drawio_enable_logging`
-- *Default Value*: `False`
+### Enable Verbrose Electron
+- *Formal Name*: `drawio_enable_verbrose_electron`
+- *Default Value*: `True`
 - *Possible Values*: `True` or `False`
 
-This option may be needed to help troubleshoot certain errors produced by the drawio app. See the
+This option may be needed to help troubleshoot certain errors produced by the
+drawio app. This option only affects the output when the drawio app errors. See the
 [Electron docs](https://www.electronjs.org/docs/latest/api/command-line-switches#--enable-loggingfile)
 for more info.
 
