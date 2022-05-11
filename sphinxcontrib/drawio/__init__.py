@@ -345,7 +345,9 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     # noinspection PyTypeChecker
     app.add_config_value("drawio_headless", "auto", "html", ENUM("auto", True, False))
     # noinspection PyTypeChecker
-    app.add_config_value("drawio_enable_verbrose_electron", True, "html", ENUM(True, False))
+    app.add_config_value(
+        "drawio_enable_verbrose_electron", True, "html", ENUM(True, False)
+    )
     app.add_config_value("drawio_no_sandbox", False, "html", ENUM(True, False))
 
     # deprecated
