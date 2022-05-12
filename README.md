@@ -124,13 +124,14 @@ This will be overridden if the transparency is set for a individual diagram in
 the directive. If the output format isn't *png*, it will not affect the image
 exported.
 
-### Enable Verbrose Electron
-- *Formal Name*: `drawio_enable_verbrose_electron`
-- *Default Value*: `True`
+### Disable Verbose Electron
+- *Formal Name*: `drawio_disable_verbose_electron`
+- *Default Value*: `False`
 - *Possible Values*: `True` or `False`
 
-This option may be needed to help troubleshoot certain errors produced by the
-drawio app. This option only affects the output when the drawio app errors. See the
+Electron's verbose logging is turned on by default to help troubleshoot certain
+errors produced by the drawio app, but can be disabled if it causes a logging
+conflict. This option only affects the output when the drawio app errors. See the
 [Electron docs](https://www.electronjs.org/docs/latest/api/command-line-switches#--enable-loggingfile)
 for more info.
 
