@@ -42,7 +42,7 @@ issue.
 ## Installation
 
 1. `python3 -m pip install sphinxcontrib-drawio`
-2. In your sphinx config:
+2. In your sphinx config, add:
 
     ```python
     extensions = [
@@ -50,9 +50,10 @@ issue.
     ]
     ```
 
-3. Add the binary to `$PATH`. For Windows add `C:\Program Files\draw.io` and on
-Linux add `/opt/drawio/`. 
-4. (if running headless), `sudo apt install xvfb`
+3. Add the draw.io binary to `$PATH`. See [Options: Binary Path](#binary-path)
+   for more details and alternative solutions.
+
+4. If running headless, install Xvfb, e.g. via `$ sudo apt install xvfb`.
 
 ## Options
 These values are placed in the `conf.py` of your sphinx project.
@@ -62,8 +63,12 @@ These values are placed in the `conf.py` of your sphinx project.
 - *Default Value*: `None`
 
 This allows for a specific override for the binary location. By default, this
-gets chosen depending on the OS (Linux, Mac, or Windows) to the default
-install path of the draw.io program.
+chooses the `drawio` (or `draw.io.exe`) binary accessible in `$PATH`. However,
+if this file does not exist, it picks the platform-appropriate path:
+
+- Windows: `C:\Program Files\draw.io\draw.io.exe`
+- Linux: `/opt/drawio/drawio` or `/opt/draw.io/drawio` (older versions)
+- MacOS: `/Applications/draw.io.app/Contents/MacOS/draw.io`.
 
 ### Headless Mode
 - *Formal Name*: `drawio_headless`
