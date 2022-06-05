@@ -26,7 +26,7 @@ from sphinx.util.fileutil import copy_asset
 from .deprecated import DrawIONode, DrawIO, render_drawio_html, render_drawio_latex
 
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 logger = logging.getLogger(__name__)
 
