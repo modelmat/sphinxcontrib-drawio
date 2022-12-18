@@ -165,7 +165,18 @@ This option controls the output file format of *this specific* directive.
 
 This option allows you to select a particular page from a draw.io file to
 export. Note that an invalid page-index will revert to one of the other valid
-pages (draw.io binary functionality).
+pages (draw.io binary functionality). `page-name` and `page-index` cannot
+coexist, if you set both options, an error will be reported.
+
+### Page Name
+- *Formal Name*: `:page-name:`
+- *Default Value*: value of `:page-index:`, else the first page
+- *Possible Values*: any string
+
+This option allows you to select a particular page by its name from a draw.io
+file to export. `page-name` and `page-index` cannot coexist, if you set both
+options, an error will be reported. If `:page-name:` is not found in the draw.io
+file, an error will be reported too.
 
 ### Export Scale
 - *Formal Name*: `:export-scale:`
