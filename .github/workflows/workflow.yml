@@ -44,11 +44,7 @@ jobs:
           pip install -r dev-requirements.txt
       - name: Intall draw.io dependencies
         run: |
-          curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
-                    | grep "browser_download_url.*deb" \
-                    | cut -d : -f 2,3 \
-                    | tr -d \" \
-                    | wget -qi - -O drawio.deb
+          wget -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v20.6.2/drawio-amd64-20.6.2.deb
           sudo apt install xvfb ./drawio.deb
       - name: Install Package
         run: |
