@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from tempfile import TemporaryFile
 from time import sleep
 from typing import Dict, Any, List
+from xml.etree import ElementTree as ET
 
 from docutils import nodes
 from docutils.nodes import Node, image as docutils_image
@@ -70,6 +71,7 @@ class DrawIOBase(SphinxDirective):
     option_spec = {
         "format": format_spec,
         "page-index": directives.nonnegative_int,
+        "page-name": directives.unchanged,
         "transparency": boolean_spec,
         "export-scale": directives.positive_int,
         "export-width": directives.positive_int,
@@ -166,12 +168,38 @@ class DrawIOConverter(ImageConverter):
         self.env.original_image_uri[destpath] = srcpath
         self.env.images.add_file(self.env.docname, destpath)
 
+    @staticmethod
+    def page_name_to_index(input_abspath: str, name: str):
+        if name is None:
+            return None
+
+        for index, diagram in enumerate(ET.parse(input_abspath).getroot()):
+            if diagram.tag != "diagram":
+                continue
+            if diagram.attrib["name"] == name:
+                return index
+
+        raise DrawIOError(
+            "draw.io file {} has no diagram named: {}".format(input_abspath, name)
+        )
+
     def _drawio_export(self, input_abspath, options, out_filename):
         builder = self.app.builder
         input_relpath = input_abspath.relative_to(builder.srcdir)
         input_stem = input_abspath.stem
 
-        page_index = str(options.get("page-index", 0))
+        page_name = options.get("page-name", None)
+        page_index = options.get("page-index", None)
+        if page_name is not None and page_index is not None:
+            raise DrawIOError("page-name & page-index cannot coexist")
+
+        if page_name:
+            page_index = self.page_name_to_index(input_abspath, page_name)
+        elif page_index is None:
+            page_index = 0
+
+        page_index = str(page_index)
+
         scale = str(
             options.get("export-scale", builder.config.drawio_default_export_scale)
             / 100
