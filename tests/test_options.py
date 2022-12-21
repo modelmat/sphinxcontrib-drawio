@@ -9,17 +9,6 @@ from sphinx.util.images import get_image_size
 from sphinxcontrib.drawio import DrawIOError
 
 
-# deprecated drawio directive test
-@pytest.mark.sphinx("html", testroot="simple")
-def test_simple(directives: List[Tag]):
-    assert (
-        directives[0].decode()
-        == '<img alt="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png" '
-        'class="drawio" src="_images/drawio-bf0f85b68784bab0e62bf5902f5a46b65d71ee70.png'
-        '"/>'
-    )
-
-
 @pytest.mark.sphinx("html", testroot="page-index")
 def test_page_index(images: List[Path]):
     assert images[0].name == "pages.png"
@@ -31,23 +20,10 @@ def test_page_index(images: List[Path]):
     assert get_image_size(images[2]) == (65, 65)
     assert get_image_size(images[3]) == (125, 65)
 
-    # deprecated drawio directive
-    assert images[4].name == "drawio-23596e9713a51f864e734695324de3c19e930125.png"
-    assert images[5].name == "drawio-d890782f09bf6478d353265d5894253de5fefbd3.png"
-    assert images[6].name == "drawio-4d4e2f8704b20c01096eed9b97cd6588d479f3a6.png"
-    assert images[7].name == "drawio-23596e9713a51f864e734695324de3c19e930125.png"
-    assert get_image_size(images[4]) == (125, 65)
-    assert get_image_size(images[5]) == (65, 65)
-    assert get_image_size(images[6]) == (65, 65)
-    assert get_image_size(images[7]) == (125, 65)
-
 
 @pytest.mark.sphinx("html", testroot="alt")
 def test_alt(directives: List[Tag]):
     assert directives[0]["alt"] == "An Example"
-
-    # deprecated drawio directive
-    assert directives[1]["alt"] == "An Example"
 
 
 @pytest.mark.sphinx("html", testroot="align")
@@ -56,43 +32,27 @@ def test_align(directives: List[Tag]):
     assert "align-center" in directives[1]["class"]
     assert "align-right" in directives[2]["class"]
 
-    # deprecated drawio directive
-    assert directives[3].parent.parent["align"] == "left"
-    assert directives[4].parent.parent["align"] == "center"
-    assert directives[5].parent.parent["align"] == "right"
-
 
 # noinspection PyTypeChecker
 @pytest.mark.sphinx("html", testroot="width-height")
 def test_width_height(images: List[Path]):
-
     assert get_image_size(images[0])[0] == 100
     assert get_image_size(images[1])[1] == 100
     assert get_image_size(images[2])[0] == 1000
-
-    # deprecated drawio directive
-    assert get_image_size(images[3])[0] == 100
-    assert get_image_size(images[4])[1] == 100
-    assert get_image_size(images[5])[0] == 1000
 
 
 # noinspection PyTypeChecker
 @pytest.mark.sphinx("html", testroot="scale")
 def test_scale(images: List[Path]):
-
-    # image size by default is 125x65
+    # image size by default is 125x65. the scaling isn't perfect
     assert get_image_size(images[0]) == (245, 125)
     assert get_image_size(images[1]) == (1217, 617)
     assert get_image_size(images[2]) == (64, 34)
     assert get_image_size(images[3]) == (125, 65)
     assert get_image_size(images[4]) == (610, 310)
 
-    # deprecated drawio directive
-    assert get_image_size(images[5]) == (245, 125)
-    assert get_image_size(images[6]) == (1217, 617)
-    assert get_image_size(images[7]) == (610, 310)
 
-
+@pytest.mark.skip(reason="No actual test case")
 @pytest.mark.sphinx("html", testroot="transparency")
 def test_transparency():
     pass
