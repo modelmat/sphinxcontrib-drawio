@@ -21,6 +21,14 @@ def test_page_index(images: List[Path]):
     assert get_image_size(images[3]) == (125, 65)
 
 
+@pytest.mark.sphinx("html", testroot="page-name")
+def test_page_name(images: List[Path]):
+    assert images[0].name == "pages.png"
+    assert images[1].name == "pages1.png"
+    assert get_image_size(images[0]) == (125, 65)
+    assert get_image_size(images[1]) == (65, 65)
+
+
 @pytest.mark.sphinx("html", testroot="alt")
 def test_alt(directives: List[Tag]):
     assert directives[0]["alt"] == "An Example"
@@ -108,3 +116,19 @@ def test_bad_config(app_with_local_user_config):
         app_with_local_user_config.build()
     (message,) = exc.value.args
     assert message == "Invalid export format 'bmp' specified for builder 'html'"
+
+
+@pytest.mark.sphinx("html", testroot="page-name-not-exist")
+def test_page_name_not_exist_config(app_with_local_user_config):
+    with pytest.raises(DrawIOError) as exc:
+        app_with_local_user_config.build()
+    (message,) = exc.value.args
+    assert "has no diagram named: none existed page name" in message
+
+
+@pytest.mark.sphinx("html", testroot="page-name-and-page-index")
+def test_page_name_and_page_index_config(app_with_local_user_config):
+    with pytest.raises(DrawIOError) as exc:
+        app_with_local_user_config.build()
+    (message,) = exc.value.args
+    assert message == "page-name & page-index cannot coexist"
