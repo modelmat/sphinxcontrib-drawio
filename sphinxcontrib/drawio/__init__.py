@@ -201,6 +201,11 @@ class DrawIOConverter(ImageConverter):
             "draw.io file {} has no diagram named: {}".format(input_abspath, name)
         )
 
+    @staticmethod
+    def num_pages_in_file(input_abspath: Path) -> int:
+        # Each diagram/page is a direct child of the root element
+        return len(ET.parse(input_abspath).getroot())
+
     def _drawio_export(self, input_abspath, options, out_filename):
         builder = self.app.builder
         input_relpath = input_abspath.relative_to(builder.srcdir)
@@ -213,6 +218,12 @@ class DrawIOConverter(ImageConverter):
 
         if page_name:
             page_index = self.page_name_to_index(input_abspath, page_name)
+        elif page_index:
+            max_index = self.num_pages_in_file(input_abspath) - 1
+            if page_index > max_index:
+                logger.warning(
+                    f"selected page {page_index} is out of range [0,{max_index}]"
+                )
         elif page_index is None:
             page_index = 0
 

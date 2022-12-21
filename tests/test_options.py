@@ -21,6 +21,14 @@ def test_page_index(images: List[Path]):
     assert get_image_size(images[3]) == (125, 65)
 
 
+@pytest.mark.sphinx("html", testroot="page-index-out-of-range")
+def test_page_index_out_of_range(content: Sphinx, directives: List[Tag]):
+    assert len(directives) == 1
+
+    warnings = content._warning.getvalue()
+    assert "selected page 6 is out of range [0,5]" in warnings
+
+
 @pytest.mark.sphinx("html", testroot="page-name")
 def test_page_name(images: List[Path]):
     assert images[0].name == "pages.png"
