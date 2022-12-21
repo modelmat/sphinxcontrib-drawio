@@ -5,27 +5,6 @@ These are equivalent to the standard `image` and `figure` directives, but
 accept the path to a `.drawio` file and additional options to control
 exporting of the diagram to a suitable image format. 
 
-These directives replace the `drawio` directive which is now deprecated, and
-for which support will be dropped in version 1.0. Deprecation warnings are 
-output when a `drawio` directive is encountered. Please replace these with
-`drawio-image` orand `drawio-figure`, taking into account these differences:
-
-- the *drawio_output_format* conf.py option has been removed; the draw.io
-  diagram is exported to the Sphinx builder's preferred image format (eg. SVG
-  for HTML, PDF for LaTeX). The *drawio_builder_export_format* configuration
-  variable allows setting another default export format for each builder. Note
-  that this can still be overridden for individual `drawio-image` and
-  `drawio-figure` directives. See below for details.
-- the *scale*, *width* and *height* options have been renamed, respectively, to
-  *export-scale*, *export-width* and *export-height* so as not to conflict with
-  the options inherited from the [image directive](https://docutils.sourceforge.io/docs/ref/rst/directives.html#image).
-- the *export-scale* option now takes an integer percentage; i.e. a value of 100
-  means no scaling. This was changed to allow non-integer scaling and offer
-  consistency with the `scale` option inherited from the [image directive](https://docutils.sourceforge.io/docs/ref/rst/directives.html#image).
-- the *drawio_default_scale* conf.py option has been replaced by the
-  *drawio_default_export_scale* option, also accepting a integer percentage
-  value.
-
 **Important:** This extension does not work on readthedocs as RTD does not allow
 packages (e.g. drawio) to be installed. If you only require diagrams in a single
 format, you can consider using editable SVGs or PNGs, accessible through
@@ -227,3 +206,4 @@ This changes the background transparency for diagrams exported to `png` files.
 Will override `drawio_default_transparency` which was set in conf.py for this
 specific diagram. If this setting is specified while the output format is not
 `png` it will have no effect on the generated image
+

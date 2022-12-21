@@ -23,8 +23,6 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
-from .deprecated import DrawIONode, DrawIO, render_drawio_html, render_drawio_latex
-
 
 __version__ = "0.0.16"
 
@@ -365,16 +363,6 @@ def setup(app: Sphinx) -> Dict[str, Any]:
         "drawio_disable_verbose_electron", False, "html", ENUM(True, False)
     )
     app.add_config_value("drawio_no_sandbox", False, "html", ENUM(True, False))
-
-    # deprecated
-    app.add_node(
-        DrawIONode, html=(render_drawio_html, None), latex=(render_drawio_latex, None)
-    )
-    app.add_directive("drawio", DrawIO)
-    app.add_config_value(
-        "drawio_output_format", "png", "html", ENUM(*VALID_OUTPUT_FORMATS)
-    )
-    app.add_config_value("drawio_default_scale", 1, "html")
 
     # Add CSS file to the HTML static path for add_css_file
     app.connect("build-finished", on_build_finished)
