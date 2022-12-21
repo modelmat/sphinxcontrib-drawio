@@ -115,7 +115,15 @@ def test_bad_config(app_with_local_user_config):
     with pytest.raises(DrawIOError) as exc:
         app_with_local_user_config.build()
     (message,) = exc.value.args
-    assert message == "Invalid export format 'bmp' specified for builder 'html'"
+    assert message == "export format 'bmp' is unsupported by draw.io"
+
+
+@pytest.mark.sphinx("html", testroot="bad-config2")
+def test_bad_config2(app_with_local_user_config):
+    with pytest.raises(DrawIOError) as exc:
+        app_with_local_user_config.build()
+    (message,) = exc.value.args
+    assert message == "invalid export format 'pdf' specified for builder 'html'"
 
 
 @pytest.mark.sphinx("html", testroot="page-name-not-exist")

@@ -5,14 +5,21 @@ import pytest
 
 from bs4 import Tag
 
+# This tests two things:
+# - That it doesn't convert when unnecessary
+# - That it doesn't error.
 
-@pytest.mark.skip(reason="Somehow sphinx doesn't convert the svg to png images.")
+
+@pytest.mark.sphinx("latex", testroot="imgconverter")
+def test_pdfnoconvert(tex_images: List[Path]):
+    (image,) = tex_images
+    # It should not convert a PDF into another format.
+    assert image.basename() == "box.pdf"
+
+
 @pytest.mark.sphinx("html", testroot="imgconverter")
-def test_imgconverter(directives: List[Tag]):
-    (img,) = directives
-    assert img.name == "img"
-    # This will have been converted from our exported
-    # SVG to PNG by sphinx.ext.imgconverter
-    assert img["src"] == "_images/box.png"
-    assert img["alt"] == "_images/box.png"
-    assert img["class"] == ["drawio"]
+def test_noconvert(directives: List[Tag]):
+    # it should not convert an SVG output from sphinx into another format
+    (image,) = directives
+    assert image["src"] == "_images/box.svg"
+    assert image["alt"] == "_images/box.svg"

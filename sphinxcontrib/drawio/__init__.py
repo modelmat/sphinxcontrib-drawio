@@ -16,6 +16,7 @@ from docutils.nodes import Node, image as docutils_image
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 from sphinx.application import Sphinx
+from sphinx.builders import Builder
 from sphinx.config import Config, ENUM
 from sphinx.directives.patches import Figure
 from sphinx.errors import SphinxError
@@ -24,12 +25,16 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
-
 __version__ = "0.0.16"
 
 logger = logging.getLogger(__name__)
 
-VALID_OUTPUT_FORMATS = ("png", "jpg", "svg", "pdf")
+VALID_OUTPUT_FORMATS = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "svg": "image/svg+xml",
+    "pdf": "application/pdf",
+}
 
 
 def is_headless(config: Config):
@@ -49,7 +54,22 @@ class DrawIOError(SphinxError):
 
 
 def format_spec(argument: Any) -> str:
-    return directives.choice(argument, VALID_OUTPUT_FORMATS)
+    return directives.choice(argument, list(VALID_OUTPUT_FORMATS.keys()))
+
+
+def is_valid_format(format: str, builder: Builder) -> str:
+    mimetype = VALID_OUTPUT_FORMATS.get(format, None)
+
+    if format is None:
+        return None
+    elif mimetype is None:
+        raise DrawIOError(f"export format '{format}' is unsupported by draw.io")
+    elif mimetype not in builder.supported_image_types:
+        raise DrawIOError(
+            f"invalid export format '{format}' specified for builder '{builder.name}'"
+        )
+    else:
+        return format
 
 
 def boolean_spec(argument: Any) -> bool:
@@ -120,14 +140,9 @@ class DrawIOConverter(ImageConverter):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        builder_name = self.app.builder.name
-        format = self.config.drawio_builder_export_format.get(builder_name)
-        if format and format not in VALID_OUTPUT_FORMATS:
-            raise DrawIOError(
-                f"Invalid export format '{format}' specified for builder"
-                f" '{builder_name}'"
-            )
-        self._default_export_format = format
+        format = self.config.drawio_builder_export_format.get(self.app.builder.name)
+
+        self._default_export_format = is_valid_format(format, self.app.builder)
 
     @property
     def imagedir(self) -> str:
@@ -139,14 +154,17 @@ class DrawIOConverter(ImageConverter):
 
     def guess_mimetypes(self, node: nodes.image) -> List[str]:
         if "drawio" in node["classes"]:
-            format = node.get("format") or self._default_export_format
+            node_format = is_valid_format(node.get("format"), self.app.builder)
+            format = node_format or self._default_export_format
             extra = "-{}".format(format) if format else ""
             return ["application/x-drawio" + extra]
-        return [None]
+        else:
+            return []
 
     def handle(self, node: nodes.image) -> None:
         """Render drawio file into an output image file."""
         _from, _to = self.get_conversion_rule(node)
+
         if _from in node["candidates"]:
             srcpath = node["candidates"][_from]
         else:
