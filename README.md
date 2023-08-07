@@ -119,6 +119,16 @@ conflict. This option only affects the output when the drawio app errors. See th
 [Electron docs](https://www.electronjs.org/docs/latest/api/command-line-switches#--enable-loggingfile)
 for more info.
 
+### Disable Shared Memory Usage
+- *Formal Name*: `drawio_disable_dev_shm_usage`
+- *Default Value*: `False`
+- *Possible Values*: `True` or `False`
+
+By default, Docker runs a container with a `/dev/shm` shared memory space of 64MB.
+This is typically too small for Chrome (Electron) and will cause Chrome to throw
+an error. Launching the browser with the `--disable-dev-shm-usage` flag will write
+shared memory files into `/tmp` instead of `/dev/shm`.
+
 ### No Sandbox
 - *Formal Name*: `drawio_no_sandbox`
 - *Default Value*: `False`
