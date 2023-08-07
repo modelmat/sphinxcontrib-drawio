@@ -119,6 +119,15 @@ conflict. This option only affects the output when the drawio app errors. See th
 [Electron docs](https://www.electronjs.org/docs/latest/api/command-line-switches#--enable-loggingfile)
 for more info.
 
+### Disable GPU
+- *Formal Name*: `drawio_disable_gpu`
+- *Default Value*: `False`
+- *Possible Values*: `True` or `False`
+
+By default, Chrome (Electron) uses GPU processes which can cause errors when
+running in environments that are not set up for it. This option disables those
+GPU processes and uses the CPU instead.
+
 ### No Sandbox
 - *Formal Name*: `drawio_no_sandbox`
 - *Default Value*: `False`
