@@ -237,6 +237,7 @@ class DrawIOConverter(ImageConverter):
             "transparency", builder.config.drawio_default_transparency
         )
         disable_verbose_electron = builder.config.drawio_disable_verbose_electron
+        disable_dev_shm_usage = builder.config.drawio_disable_dev_shm_usage
         disable_gpu = builder.config.drawio_disable_gpu
         no_sandbox = builder.config.drawio_no_sandbox
 
@@ -320,6 +321,10 @@ class DrawIOConverter(ImageConverter):
 
         if not disable_verbose_electron:
             drawio_args.append("--enable-logging")
+
+
+        if disable_dev_shm_usage:
+            drawio_args.append("--disable-dev-shm-usage")
 
         if disable_gpu:
             drawio_args.append("--disable-gpu")
@@ -424,6 +429,9 @@ def setup(app: Sphinx) -> Dict[str, Any]:
     # noinspection PyTypeChecker
     app.add_config_value(
         "drawio_disable_verbose_electron", False, "html", ENUM(True, False)
+    )
+    app.add_config_value(
+        "drawio_disable_dev_shm_usage", False, "html", ENUM(True, False)
     )
     app.add_config_value(
         "drawio_disable_gpu", False, "html", ENUM(True, False)
