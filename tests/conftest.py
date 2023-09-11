@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from pathlib import Path
 from typing import List
@@ -53,7 +54,7 @@ def _setup_local_user_config(app):
 
 @pytest.fixture(scope="session")
 def rootdir():
-    return Path(__file__).parent.abspath() / "roots"
+    return Path(__file__).parent.absolute() / "roots"
 
 
 @pytest.fixture()
