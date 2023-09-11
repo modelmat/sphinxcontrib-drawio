@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from pathlib import Path
 from typing import List
@@ -7,7 +6,6 @@ from typing import List
 import pytest
 from bs4 import BeautifulSoup, Tag
 from sphinx.application import Sphinx
-from sphinx.testing.path import path
 
 pytest_plugins = "sphinx.testing.fixtures"
 
@@ -55,7 +53,7 @@ def _setup_local_user_config(app):
 
 @pytest.fixture(scope="session")
 def rootdir():
-    return path(__file__).parent.abspath() / "roots"
+    return Path(__file__).parent.abspath() / "roots"
 
 
 @pytest.fixture()
