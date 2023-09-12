@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
+import sphinx
 
 from bs4 import Tag
 
@@ -14,7 +15,10 @@ from bs4 import Tag
 def test_pdfnoconvert(tex_images: List[Path]):
     (image,) = tex_images
     # It should not convert a PDF into another format.
-    assert image.basename() == "box.pdf"
+    if sphinx.version_info[:2] < (7, 2):
+        assert image.basename() == "box.pdf"
+    else:
+        assert image.name == "box.pdf"
 
 
 @pytest.mark.sphinx("html", testroot="imgconverter")
