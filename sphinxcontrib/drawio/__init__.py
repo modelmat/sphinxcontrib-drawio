@@ -25,7 +25,7 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset
 
-__version__ = "0.0.16"
+__version__ = "0.0.17"
 
 logger = logging.getLogger(__name__)
 
