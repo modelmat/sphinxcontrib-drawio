@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sphinx
 from pathlib import Path
 from typing import List
 
@@ -54,7 +55,12 @@ def _setup_local_user_config(app):
 
 @pytest.fixture(scope="session")
 def rootdir():
-    return Path(__file__).parent.absolute() / "roots"
+    if sphinx.version_info[:2] < (7, 2):
+        from sphinx.testing.path import path
+
+        return path(__file__).parent.abspath() / "roots"
+
+    return Path(__file__).resolve().parent / "roots"
 
 
 @pytest.fixture()
