@@ -8,9 +8,6 @@ on:
       - '*'
     tags:
       - '*'
-  create:
-    tags:
-      - '*'
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -55,7 +52,7 @@ jobs:
   pypi-release:
     needs: test-extension
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/tags/') && github.repository_owner	== 'Modelmat'
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/') && github.repository_owner == 'Modelmat'
     steps:
       - uses: actions/checkout@v3
         with:
