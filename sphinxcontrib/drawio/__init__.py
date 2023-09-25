@@ -156,7 +156,7 @@ class DrawIOConverter(ImageConverter):
         if "drawio" in node["classes"]:
             node_format = is_valid_format(node.get("format"), self.app.builder)
             format = node_format or self._default_export_format
-            extra = "-{}".format(format) if format else ""
+            extra = f"-{format}" if format else ""
             return ["application/x-drawio" + extra]
         else:
             return []
@@ -197,9 +197,7 @@ class DrawIOConverter(ImageConverter):
             if diagram.attrib["name"] == name:
                 return index
 
-        raise DrawIOError(
-            "draw.io file {} has no diagram named: {}".format(input_abspath, name)
-        )
+        raise DrawIOError(f"draw.io file {input_abspath} has no diagram named: {name}")
 
     @staticmethod
     def num_pages_in_file(input_abspath: Path) -> int:
@@ -298,7 +296,7 @@ class DrawIOConverter(ImageConverter):
         for option, drawio_arg in OPTIONAL_UNIQUES.items():
             if option in options:
                 value = options[option]
-                extra_args.append("--{}".format(drawio_arg))
+                extra_args.append(f"--{drawio_arg}")
                 extra_args.append(str(value))
 
         if transparent:
@@ -336,7 +334,7 @@ class DrawIOConverter(ImageConverter):
 
         new_env = os.environ.copy()
         if builder.config._display:
-            new_env["DISPLAY"] = ":{}".format(builder.config._display)
+            new_env["DISPLAY"] = f":{builder.config._display}"
 
         # This environment variable prevents the drawio application from starting.
         # This is automatically set within certain Visual Studio Code contexts,
@@ -350,7 +348,7 @@ class DrawIOConverter(ImageConverter):
             )
         except OSError as exc:
             raise DrawIOError(
-                "draw.io ({}) exited with error:\n{}".format(" ".join(drawio_args), exc)
+                f"draw.io ({' '.join(drawio_args)}) exited with error:\n{exc}"
             )
         except subprocess.CalledProcessError as exc:
             raise DrawIOError(
@@ -361,8 +359,8 @@ class DrawIOConverter(ImageConverter):
             )
         if not export_abspath.exists():
             raise DrawIOError(
-                "draw.io did not produce an output file:"
-                "\n[stderr]\n{}\n[stdout]\n{}".format(ret.stderr, ret.stdout)
+                f"draw.io ({' '.join(drawio_args)}) did not produce an output file:"
+                "\n[stderr]\n{ret.stderr}\n[stdout]\n{ret.stdout}"
             )
         return export_abspath
 
@@ -380,15 +378,15 @@ def on_config_inited(app: Sphinx, config: Config) -> None:
             )
             if xvfb.poll() is not None:
                 raise OSError(
-                    "Failed to start Xvfb process"
-                    "\n[stdout]\n{}\n[stderr]{}".format(*xvfb.communicate())
+                    f"Failed to start Xvfb process"
+                    "\n[stdout]\n{}\n[stderr]{*xvfb.communicate()}"
                 )
             while fp.tell() == 0:
                 sleep(0.01)  # wait for Xvfb to start up
             fp.seek(0)
             config._xvfb = xvfb
             config._display = fp.read().decode("ascii").strip()
-        logger.info("Xvfb is running on display :{}".format(config._display))
+        logger.info(f"Xvfb is running on display :{config._display}")
     else:
         logger.info("running in non-headless mode, not starting Xvfb")
         config._xvfb = None
@@ -407,8 +405,8 @@ def on_build_finished(app: Sphinx, exc: Exception) -> None:
         stdout, stderr = app.config._xvfb.communicate()
         if app.config._xvfb.poll() != 0:
             raise OSError(
-                "Encountered an issue while terminating Xvfb"
-                "\n[stdout]\n{}\n[stderr]{}".format(stdout, stderr)
+                f"Encountered an issue while terminating Xvfb"
+                "\n[stdout]\n{stdout}\n[stderr]{stderr}"
             )
 
 
