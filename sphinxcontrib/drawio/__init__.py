@@ -348,19 +348,26 @@ class DrawIOConverter(ImageConverter):
             )
         except OSError as exc:
             raise DrawIOError(
-                f"draw.io ({' '.join(drawio_args)}) exited with error:\n{exc}"
+                "draw.io ({args}) exited with error:\n{exc}".format(
+                    args=" ".join(drawio_args), exc=exc
+                )
             )
         except subprocess.CalledProcessError as exc:
             raise DrawIOError(
-                "draw.io ({}) exited with error:\n[stderr]\n{}"
-                "\n[stdout]\n{}\n[returncode]\n{}".format(
-                    " ".join(drawio_args), exc.stderr, exc.stdout, exc.returncode
+                "draw.io ({args}) exited with error:\n[stderr]\n{stderr}"
+                "\n[stdout]\n{stdout}\n[returncode]\n{returncode}".format(
+                    args=" ".join(drawio_args),
+                    stderr=exc.stderr,
+                    stdout=exc.stdout,
+                    returncode=exc.returncode,
                 )
             )
         if not export_abspath.exists():
             raise DrawIOError(
-                f"draw.io ({' '.join(drawio_args)}) did not produce an output file:"
-                "\n[stderr]\n{ret.stderr}\n[stdout]\n{ret.stdout}"
+                "draw.io ({args}) did not produce an output file:"
+                "\n[stderr]\n{stderr}\n[stdout]\n{stdout}".format(
+                    args=" ".join(drawio_args), stderr=ret.stderr, stdout=ret.stdout
+                )
             )
         return export_abspath
 
