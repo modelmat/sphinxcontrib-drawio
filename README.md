@@ -237,3 +237,12 @@ Will override `drawio_default_transparency` which was set in conf.py for this
 specific diagram. If this setting is specified while the output format is not
 `png` it will have no effect on the generated image
 
+### Layer Selection
+- *Formal Name*: `:layer-selection:`
+- *Possible Values*: comma separated list of integers
+
+This option allows you to select one or more layers from a draw.io file to
+export. Note that draw.io uses 0 as the lowest layer, which is usually the
+*Background* layer.
+If not specified, all visible layers will be exported (draw.io binary functionality).
+
