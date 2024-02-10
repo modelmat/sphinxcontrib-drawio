@@ -247,6 +247,7 @@ class DrawIOConverter(ImageConverter):
             # Mainly useful for pytest, as it creates a new build directory every time
             str(input_relpath),
             page_index,
+            str(layer_selection) if layer_selection else "",
             scale,
             "true" if transparent else "false",
             *[str(options.get(option)) for option in OPTIONAL_UNIQUES],

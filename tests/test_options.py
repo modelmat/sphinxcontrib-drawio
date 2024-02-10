@@ -148,3 +148,28 @@ def test_page_name_and_page_index_config(app_with_local_user_config):
         app_with_local_user_config.build()
     (message,) = exc.value.args
     assert message == "page-name & page-index cannot coexist"
+
+
+@pytest.mark.sphinx("html", testroot="layer-selection")
+def test_layer_selection(images: List[Path]):
+    assert images[0].name == "layers.png"
+    assert images[1].name == "layers1.png"
+    assert images[2].name == "layers2.png"
+    assert images[3].name == "layers3.png"
+    assert images[4].name == "layers4.png"
+    assert get_image_size(images[0]) == (125, 65)
+    assert get_image_size(images[1]) == (65, 65)
+    assert get_image_size(images[2]) == (105, 95)
+    assert get_image_size(images[3]) == (125, 215)
+    assert get_image_size(images[4]) == (125, 125)
+
+
+@pytest.mark.sphinx("html", testroot="layer-not-exist")
+def test_layer_not_exist(app_with_local_user_config):
+    with pytest.raises(DrawIOError) as exc:
+        app_with_local_user_config.build()
+    (message,) = exc.value.args
+    assert "Export failed" in message
+
+
+
