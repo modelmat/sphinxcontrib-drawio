@@ -401,7 +401,7 @@ def on_config_inited(app: Sphinx, config: Config) -> None:
 
 
 def on_build_finished(app: Sphinx, exc: Exception) -> None:
-    if exc is None:
+    if app.builder.format == 'html' and exc is None:
         this_file_path = os.path.dirname(os.path.realpath(__file__))
         src = os.path.join(this_file_path, "drawio.css")
         dst = os.path.join(app.outdir, "_static")
