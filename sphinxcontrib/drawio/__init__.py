@@ -96,6 +96,7 @@ class DrawIOBase(SphinxDirective):
         "export-scale": directives.positive_int,
         "export-width": directives.positive_int,
         "export-height": directives.positive_int,
+        "layer-selection": directives.unchanged,
     }
 
     def run(self) -> List[Node]:
@@ -234,6 +235,7 @@ class DrawIOConverter(ImageConverter):
         transparent = options.get(
             "transparency", builder.config.drawio_default_transparency
         )
+        layer_selection = options.get("layer-selection", None)
         disable_verbose_electron = builder.config.drawio_disable_verbose_electron
         disable_dev_shm_usage = builder.config.drawio_disable_dev_shm_usage
         disable_gpu = builder.config.drawio_disable_gpu
@@ -245,6 +247,7 @@ class DrawIOConverter(ImageConverter):
             # Mainly useful for pytest, as it creates a new build directory every time
             str(input_relpath),
             page_index,
+            str(layer_selection) if layer_selection else "",
             scale,
             "true" if transparent else "false",
             *[str(options.get(option)) for option in OPTIONAL_UNIQUES],
@@ -301,6 +304,10 @@ class DrawIOConverter(ImageConverter):
 
         if transparent:
             extra_args.append("--transparent")
+
+        if layer_selection:
+            extra_args.append("--layers")
+            extra_args.append(layer_selection)
 
         drawio_args = [
             binary_path,
