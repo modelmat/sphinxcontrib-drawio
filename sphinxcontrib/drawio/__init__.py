@@ -90,7 +90,7 @@ def traverse(nodes):
 class DrawIOBase(SphinxDirective):
     option_spec = {
         "format": format_spec,
-        "page-index": directives.nonnegative_int,
+        "page-index": directives.positive_int,
         "page-name": directives.unchanged,
         "transparency": boolean_spec,
         "export-scale": directives.positive_int,
@@ -196,7 +196,7 @@ class DrawIOConverter(ImageConverter):
             if diagram.tag != "diagram":
                 continue
             if diagram.attrib["name"] == name:
-                return index
+                return index + 1
 
         raise DrawIOError(f"draw.io file {input_abspath} has no diagram named: {name}")
 
@@ -218,13 +218,13 @@ class DrawIOConverter(ImageConverter):
         if page_name:
             page_index = self.page_name_to_index(input_abspath, page_name)
         elif page_index:
-            max_index = self.num_pages_in_file(input_abspath) - 1
+            max_index = self.num_pages_in_file(input_abspath)
             if page_index > max_index:
                 logger.warning(
-                    f"selected page {page_index} is out of range [0,{max_index}]"
+                    f"selected page {page_index} is out of range [1,{max_index}]"
                 )
         elif page_index is None:
-            page_index = 0
+            page_index = 1
 
         page_index = str(page_index)
 
@@ -408,7 +408,7 @@ def on_config_inited(app: Sphinx, config: Config) -> None:
 
 
 def on_build_finished(app: Sphinx, exc: Exception) -> None:
-    if app.builder.format == 'html' and exc is None:
+    if app.builder.format == "html" and exc is None:
         this_file_path = os.path.dirname(os.path.realpath(__file__))
         src = os.path.join(this_file_path, "drawio.css")
         dst = os.path.join(app.outdir, "_static")

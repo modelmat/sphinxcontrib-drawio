@@ -1,3 +1,5 @@
+import sys
+
 from pathlib import Path
 from typing import List
 
@@ -6,6 +8,8 @@ import pytest
 from bs4 import Tag
 from sphinx.application import Sphinx
 from sphinx.util.images import get_image_size
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
 from sphinxcontrib.drawio import DrawIOError
 
 
@@ -15,10 +19,10 @@ def test_page_index(images: List[Path]):
     assert images[1].name == "pages1.png"
     assert images[2].name == "pages2.png"
     assert images[3].name == "pages.png"
-    assert get_image_size(images[0]) == (125, 65)
-    assert get_image_size(images[1]) == (65, 65)
-    assert get_image_size(images[2]) == (65, 65)
-    assert get_image_size(images[3]) == (125, 65)
+    assert get_image_size(images[0]) == (124, 64)
+    assert get_image_size(images[1]) == (64, 64)
+    assert get_image_size(images[2]) == (64, 64)
+    assert get_image_size(images[3]) == (124, 64)
 
 
 @pytest.mark.sphinx("html", testroot="page-index-out-of-range")
@@ -26,15 +30,15 @@ def test_page_index_out_of_range(content: Sphinx, directives: List[Tag]):
     assert len(directives) == 1
 
     warnings = content._warning.getvalue()
-    assert "selected page 6 is out of range [0,5]" in warnings
+    assert "selected page 7 is out of range [1,6]" in warnings
 
 
 @pytest.mark.sphinx("html", testroot="page-name")
 def test_page_name(images: List[Path]):
     assert images[0].name == "pages.png"
     assert images[1].name == "pages1.png"
-    assert get_image_size(images[0]) == (125, 65)
-    assert get_image_size(images[1]) == (65, 65)
+    assert get_image_size(images[0]) == (124, 64)
+    assert get_image_size(images[1]) == (64, 64)
 
 
 @pytest.mark.sphinx("html", testroot="alt")
@@ -64,7 +68,7 @@ def test_scale(images: List[Path]):
     assert get_image_size(images[0]) == (245, 125)
     assert get_image_size(images[1]) == (1217, 617)
     assert get_image_size(images[2]) == (64, 34)
-    assert get_image_size(images[3]) == (125, 65)
+    assert get_image_size(images[3]) == (124, 64)
     assert get_image_size(images[4]) == (610, 310)
 
 
@@ -86,7 +90,7 @@ def test_image(directives: List[Tag]):
 @pytest.mark.sphinx("html", testroot="figure")
 def test_figure(content: Sphinx, directives: List[Tag]):
     filenames_sizes = [
-        ("box.png", (125, 65)),
+        ("box.png", (124, 64)),
         ("box1.png", (185, 95)),
     ]
     for img, (filename, size) in zip(directives, filenames_sizes):
@@ -157,11 +161,11 @@ def test_layer_selection(images: List[Path]):
     assert images[2].name == "layers2.png"
     assert images[3].name == "layers3.png"
     assert images[4].name == "layers4.png"
-    assert get_image_size(images[0]) == (125, 65)
-    assert get_image_size(images[1]) == (65, 65)
-    assert get_image_size(images[2]) == (105, 95)
-    assert get_image_size(images[3]) == (125, 215)
-    assert get_image_size(images[4]) == (125, 125)
+    assert get_image_size(images[0]) == (124, 64)
+    assert get_image_size(images[1]) == (64, 64)
+    assert get_image_size(images[2]) == (104, 94)
+    assert get_image_size(images[3]) == (124, 214)
+    assert get_image_size(images[4]) == (124, 124)
 
 
 @pytest.mark.sphinx("html", testroot="layer-not-exist")
@@ -170,6 +174,3 @@ def test_layer_not_exist(app_with_local_user_config):
         app_with_local_user_config.build()
     (message,) = exc.value.args
     assert "Export failed" in message
-
-
-

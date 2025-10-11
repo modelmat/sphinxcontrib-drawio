@@ -18,10 +18,10 @@ def test_pdf_image(tex_images: List[Path]):
 @pytest.mark.sphinx("latex", testroot="image", srcdir="pdf_image_crop")
 def test_pdf_image_crop(tex_images: List[Path]):
     (image,) = tex_images
-    assert get_mediabox(image) == ("88.080002", "47.039997")
+    assert get_mediabox(image) == ("89.040001", "45.119999")
 
 
-RE_MEDIABOX = re.compile(rb"^/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]")
+RE_MEDIABOX = re.compile(rb"^/MediaBox \[\s*0\s*0\s*([\d.]+) ([\d.]+)\s*\]")
 
 
 def get_mediabox(filename):

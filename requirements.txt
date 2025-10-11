@@ -1,3 +1,4 @@
-sphinx>=2
-wheel==0.38.1
-twine==2.0.0
+sphinx=>7
+wheel
+twine
+jinja2
