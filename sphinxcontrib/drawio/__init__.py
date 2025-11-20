@@ -3,6 +3,7 @@ import os.path
 import platform
 import shutil
 import subprocess
+import re
 from hashlib import sha1
 from pathlib import Path
 from subprocess import Popen, PIPE
@@ -208,7 +209,6 @@ class DrawIOConverter(ImageConverter):
     def _drawio_export(self, input_abspath, options, out_filename):
         builder = self.app.builder
         input_relpath = input_abspath.relative_to(builder.srcdir)
-        input_stem = input_abspath.stem
 
         page_name = options.get("page-name", None)
         page_index = options.get("page-index", None)
@@ -219,12 +219,19 @@ class DrawIOConverter(ImageConverter):
             page_index = self.page_name_to_index(input_abspath, page_name)
         elif page_index:
             max_index = self.num_pages_in_file(input_abspath)
+            start_index = 1
+            if builder.config.drawio_version < (27, 0, 2):
+                max_index = max_index - 1
+                start_index = 0
             if page_index > max_index:
                 logger.warning(
-                    f"selected page {page_index} is out of range [1,{max_index}]"
+                    f"selected page {page_index} is out of range [{start_index},{max_index}]"
                 )
         elif page_index is None:
             page_index = 1
+
+        if builder.config.drawio_version < (27, 0, 2):
+            page_index -= 1
 
         page_index = str(page_index)
 
@@ -265,30 +272,6 @@ class DrawIOConverter(ImageConverter):
         ):
             return export_abspath
 
-        drawio_in_path = shutil.which("drawio")
-        draw_dot_io_in_path = shutil.which("draw.io")
-        WINDOWS_PATH = r"C:\Program Files\draw.io\draw.io.exe"
-        MACOS_PATH = "/Applications/draw.io.app/Contents/MacOS/draw.io"
-        LINUX_PATH = "/opt/drawio/drawio"
-        LINUX_OLD_PATH = "/opt/draw.io/drawio"
-
-        if builder.config.drawio_binary_path:
-            binary_path = builder.config.drawio_binary_path
-        elif drawio_in_path:
-            binary_path = drawio_in_path
-        elif draw_dot_io_in_path:
-            binary_path = draw_dot_io_in_path
-        elif platform.system() == "Windows" and os.path.isfile(WINDOWS_PATH):
-            binary_path = WINDOWS_PATH
-        elif platform.system() == "Darwin" and os.path.isfile(MACOS_PATH):
-            binary_path = MACOS_PATH
-        elif platform.system() == "Linux" and os.path.isfile(LINUX_PATH):
-            binary_path = LINUX_PATH
-        elif platform.system() == "Linux" and os.path.isfile(LINUX_OLD_PATH):
-            binary_path = LINUX_OLD_PATH
-        else:
-            raise DrawIOError("No drawio executable found")
-
         scale_args = ["--scale", scale]
         if output_format == "pdf" and float(scale) == 1.0:
             # https://github.com/jgraph/drawio-desktop/issues/344 workaround
@@ -310,7 +293,6 @@ class DrawIOConverter(ImageConverter):
             extra_args.append(layer_selection)
 
         drawio_args = [
-            binary_path,
             "--export",
             "--crop",
             "--page-index",
@@ -339,36 +321,10 @@ class DrawIOConverter(ImageConverter):
             # This may be needed for docker support, and it has to be the last argument to work.
             drawio_args.append("--no-sandbox")
 
-        new_env = os.environ.copy()
-        if builder.config._display:
-            new_env["DISPLAY"] = f":{builder.config._display}"
-
-        # This environment variable prevents the drawio application from starting.
-        # This is automatically set within certain Visual Studio Code contexts,
-        # such as for the reStructuredText (sphinx) preview.
-        new_env.pop("ELECTRON_RUN_AS_NODE", None)
-
         logger.info(f"(drawio) '{input_relpath}' -> '{export_relpath}'")
-        try:
-            ret = subprocess.run(
-                drawio_args, stderr=PIPE, stdout=PIPE, check=True, env=new_env
-            )
-        except OSError as exc:
-            raise DrawIOError(
-                "draw.io ({args}) exited with error:\n{exc}".format(
-                    args=" ".join(drawio_args), exc=exc
-                )
-            )
-        except subprocess.CalledProcessError as exc:
-            raise DrawIOError(
-                "draw.io ({args}) exited with error:\n[stderr]\n{stderr}"
-                "\n[stdout]\n{stdout}\n[returncode]\n{returncode}".format(
-                    args=" ".join(drawio_args),
-                    stderr=exc.stderr,
-                    stdout=exc.stdout,
-                    returncode=exc.returncode,
-                )
-            )
+
+        ret = run_drawio(builder.config, drawio_args)
+
         if not export_abspath.exists():
             raise DrawIOError(
                 "draw.io ({args}) did not produce an output file:"
@@ -377,6 +333,84 @@ class DrawIOConverter(ImageConverter):
                 )
             )
         return export_abspath
+
+
+def run_drawio(config: Config, args: list) -> subprocess.CompletedProcess:
+    try:
+        ret = subprocess.run(
+            [config.binary_path] + args,
+            stderr=PIPE,
+            stdout=PIPE,
+            check=True,
+            env=config.build_env,
+        )
+    except OSError as exc:
+        raise DrawIOError(
+            "draw.io ({args}) exited with error:\n{exc}".format(
+                args=" ".join(args), exc=exc
+            )
+        )
+    except subprocess.CalledProcessError as exc:
+        raise DrawIOError(
+            "draw.io ({args}) exited with error:\n[stderr]\n{stderr}"
+            "\n[stdout]\n{stdout}\n[returncode]\n{returncode}".format(
+                args=" ".join(args),
+                stderr=exc.stderr,
+                stdout=exc.stdout,
+                returncode=exc.returncode,
+            )
+        )
+    return ret
+
+
+def determine_drawio_binary(config: Config) -> None:
+    drawio_in_path = shutil.which("drawio") or shutil.which("draw.io")
+    WINDOWS_PATH = r"C:\Program Files\draw.io\draw.io.exe"
+    MACOS_PATH = "/Applications/draw.io.app/Contents/MacOS/draw.io"
+    LINUX_PATH = "/opt/drawio/drawio"
+    LINUX_OLD_PATH = "/opt/draw.io/drawio"
+
+    if config.drawio_binary_path:
+        binary_path = config.drawio_binary_path
+    elif drawio_in_path:
+        binary_path = drawio_in_path
+    elif platform.system() == "Windows" and os.path.isfile(WINDOWS_PATH):
+        binary_path = WINDOWS_PATH
+    elif platform.system() == "Darwin" and os.path.isfile(MACOS_PATH):
+        binary_path = MACOS_PATH
+    elif platform.system() == "Linux" and os.path.isfile(LINUX_PATH):
+        binary_path = LINUX_PATH
+    elif platform.system() == "Linux" and os.path.isfile(LINUX_OLD_PATH):
+        binary_path = LINUX_OLD_PATH
+    else:
+        raise DrawIOError("No drawio executable found")
+    config.binary_path = binary_path
+
+
+def create_build_env(config: Config) -> None:
+    build_env = os.environ.copy()
+    if config._display:
+        build_env["DISPLAY"] = f":{config._display}"
+    # This environment variable prevents the drawio application from starting.
+    # This is automatically set within certain Visual Studio Code contexts,
+    # such as for the reStructuredText (sphinx) preview.
+    build_env.pop("ELECTRON_RUN_AS_NODE", None)
+    config.build_env = build_env
+
+
+def determine_drawio_version(config: Config) -> None:
+    config.drawio_version = (0, 0, 0)
+    ret = run_drawio(config, ["--version"])
+    out: str = ret.stdout.decode().strip()
+    m = re.search(r"(\d{1,}\.\d{1,}\.\d{1,})", out)
+    try:
+        ver_str = m.group(1)
+    except (IndexError, AttributeError):
+        raise SystemExit(out)
+    try:
+        config.drawio_version = tuple(int(i) for i in ver_str.split("."))
+    except:
+        raise SystemExit(ver_str)
 
 
 def on_config_inited(app: Sphinx, config: Config) -> None:
@@ -405,6 +439,9 @@ def on_config_inited(app: Sphinx, config: Config) -> None:
         logger.info("running in non-headless mode, not starting Xvfb")
         config._xvfb = None
         config._display = None
+    determine_drawio_binary(config)
+    create_build_env(config)
+    determine_drawio_version(config)
 
 
 def on_build_finished(app: Sphinx, exc: Exception) -> None:

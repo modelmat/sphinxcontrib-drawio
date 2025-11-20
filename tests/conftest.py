@@ -1,9 +1,14 @@
 import json
 import os
 import re
+import platform
+import subprocess
 import sphinx
+import shutil
 from pathlib import Path
 from typing import List
+from time import sleep
+from tempfile import TemporaryFile
 
 import pytest
 from bs4 import BeautifulSoup, Tag
@@ -61,6 +66,77 @@ def rootdir():
         return path(__file__).parent.abspath() / "roots"
 
     return Path(__file__).resolve().parent / "roots"
+
+
+@pytest.fixture(scope="session")
+def drawio_version():
+    def is_headless():
+        if platform.system() != "Linux":
+            # Xvfb can only run on Linux
+            return False
+        # DISPLAY will exist if an X-server is running
+        return False if os.getenv("DISPLAY") else True
+
+    def terminate_xvfb(xvfb: subprocess.Popen | None):
+        if not xvfb:
+            return
+        xvfb.terminate()
+        stdout, stderr = xvfb.communicate()
+        if xvfb.poll() != 0:
+            raise OSError(
+                "Encountered an issue while terminating Xvfb"
+                f"\n[stdout]\n{stdout}\n[stderr]{stderr}"
+            )
+
+    xvfb = None
+    display = None
+    if is_headless():
+        with TemporaryFile() as fp:
+            fd = fp.fileno()
+            xvfb = subprocess.Popen(
+                ["Xvfb", "-displayfd", str(fd), "-screen", "0", "1280x768x16"],
+                pass_fds=(fd,),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if xvfb.poll() is not None:
+                raise OSError(
+                    "Failed to start Xvfb process\n[stdout]\n{}\n[stderr]{}".format(
+                        *xvfb.communicate()
+                    )
+                )
+            while fp.tell() == 0:
+                sleep(0.01)  # wait for Xvfb to start up
+            fp.seek(0)
+            display = fp.read().decode("ascii").strip()
+    env = os.environ.copy()
+    if display:
+        env["DISPLAY"] = f":{display}"
+    # This environment variable prevents the drawio application from starting.
+    # This is automatically set within certain Visual Studio Code contexts,
+    # such as for the reStructuredText (sphinx) preview.
+    env.pop("ELECTRON_RUN_AS_NODE", None)
+    drawio = shutil.which("drawio") or shutil.which("draw.io")
+    ret = subprocess.run(
+        [drawio, "--version"],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        check=True,
+        env=env,
+    )
+    out: str = ret.stdout.decode().strip()
+    m = re.search(r"(\d{1,}\.\d{1,}\.\d{1,})", out)
+    try:
+        ver_str = m.group(1)
+    except (IndexError, AttributeError):
+        terminate_xvfb()
+        raise SystemExit(out)
+    try:
+        version = tuple(int(i) for i in ver_str.split("."))
+    except:
+        terminate_xvfb()
+        raise SystemExit(ver_str)
+    return version
 
 
 @pytest.fixture()

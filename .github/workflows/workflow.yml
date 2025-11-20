@@ -26,13 +26,15 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.12']
-        drawio-version: ['28.2.5']
+        drawio-version: ['20.6.2', '26.2.15', '28.2.5']
     steps:
       - uses: actions/checkout@v5
       - name: Install drawio ${{ matrix.drawio-version }}
         run: |
           wget --no-verbose -O drawio.deb https://github.com/jgraph/drawio-desktop/releases/download/v${{ matrix.drawio-version }}/drawio-amd64-${{ matrix.drawio-version }}.deb
           sudo apt install xvfb ./drawio.deb
+      - name: Check PATH
+        run: which drawio
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}

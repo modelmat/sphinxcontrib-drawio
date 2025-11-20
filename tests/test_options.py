@@ -14,31 +14,53 @@ from sphinxcontrib.drawio import DrawIOError
 
 
 @pytest.mark.sphinx("html", testroot="page-index")
-def test_page_index(images: List[Path]):
+def test_page_index(drawio_version, images: List[Path]):
     assert images[0].name == "pages.png"
     assert images[1].name == "pages1.png"
     assert images[2].name == "pages2.png"
     assert images[3].name == "pages.png"
-    assert get_image_size(images[0]) == (124, 64)
-    assert get_image_size(images[1]) == (64, 64)
-    assert get_image_size(images[2]) == (64, 64)
-    assert get_image_size(images[3]) == (124, 64)
+    if drawio_version <= (20, 6, 2):
+        image_0 = (125, 65)
+        image_1 = (65, 65)
+        image_2 = (65, 65)
+        image_3 = (125, 65)
+    else:
+        image_0 = (124, 64)
+        image_1 = (64, 64)
+        image_2 = (64, 64)
+        image_3 = (124, 64)
+    assert get_image_size(images[0]) == image_0
+    assert get_image_size(images[1]) == image_1
+    assert get_image_size(images[2]) == image_2
+    assert get_image_size(images[3]) == image_3
 
 
 @pytest.mark.sphinx("html", testroot="page-index-out-of-range")
-def test_page_index_out_of_range(content: Sphinx, directives: List[Tag]):
+def test_page_index_out_of_range(
+    drawio_version, content: Sphinx, directives: List[Tag]
+):
     assert len(directives) == 1
 
     warnings = content._warning.getvalue()
-    assert "selected page 7 is out of range [1,6]" in warnings
+    if drawio_version >= (27, 0, 2):
+        assert "selected page 7 is out of range [1,6]" in warnings
+    else:
+        assert "selected page 7 is out of range [0,5]" in warnings
 
 
 @pytest.mark.sphinx("html", testroot="page-name")
-def test_page_name(images: List[Path]):
+def test_page_name(drawio_version, images: List[Path]):
     assert images[0].name == "pages.png"
     assert images[1].name == "pages1.png"
-    assert get_image_size(images[0]) == (124, 64)
-    assert get_image_size(images[1]) == (64, 64)
+    if drawio_version <= (20, 6, 2):
+        image_0 = (125, 65)
+        image_1 = (65, 65)
+    else:
+        image_0 = (124, 64)
+        image_1 = (64, 64)
+
+    assert get_image_size(images[0]) == image_0
+    assert get_image_size(images[1]) == image_1
 
 
 @pytest.mark.sphinx("html", testroot="alt")
@@ -63,13 +85,25 @@ def test_width_height(images: List[Path]):
 
 # noinspection PyTypeChecker
 @pytest.mark.sphinx("html", testroot="scale")
-def test_scale(images: List[Path]):
-    # image size by default is 125x65. the scaling isn't perfect
-    assert get_image_size(images[0]) == (245, 125)
-    assert get_image_size(images[1]) == (1217, 617)
-    assert get_image_size(images[2]) == (64, 34)
-    assert get_image_size(images[3]) == (124, 64)
-    assert get_image_size(images[4]) == (610, 310)
+def test_scale(drawio_version, images: List[Path]):
+    # image size by default is 12(4|5)x6(4|5). the scaling isn't perfect
+    if drawio_version <= (20, 6, 2):
+        image_0 = (245, 125)
+        image_1 = (1217, 617)
+        image_2 = (64, 34)
+        image_3 = (125, 65)
+        image_4 = (610, 310)
+    else:
+        image_0 = (245, 125)
+        image_1 = (1217, 617)
+        image_2 = (64, 34)
+        image_3 = (124, 64)
+        image_4 = (610, 310)
+    assert get_image_size(images[0]) == image_0
+    assert get_image_size(images[1]) == image_1
+    assert get_image_size(images[2]) == image_2
+    assert get_image_size(images[3]) == image_3
+    assert get_image_size(images[4]) == image_4
 
 
 @pytest.mark.skip(reason="No actual test case")
@@ -88,10 +122,17 @@ def test_image(directives: List[Tag]):
 
 
 @pytest.mark.sphinx("html", testroot="figure")
-def test_figure(content: Sphinx, directives: List[Tag]):
+def test_figure(drawio_version, content: Sphinx, directives: List[Tag]):
+    if drawio_version <= (20, 6, 2):
+        box_0 = (125, 65)
+        box_1 = (185, 95)
+    else:
+        box_0 = (124, 64)
+        box_1 = (185, 95)
+
     filenames_sizes = [
-        ("box.png", (124, 64)),
-        ("box1.png", (185, 95)),
+        ("box.png", box_0),
+        ("box1.png", box_1),
     ]
     for img, (filename, size) in zip(directives, filenames_sizes):
         assert img.name == "img"
@@ -155,17 +196,30 @@ def test_page_name_and_page_index_config(app_with_local_user_config):
 
 
 @pytest.mark.sphinx("html", testroot="layer-selection")
-def test_layer_selection(images: List[Path]):
+def test_layer_selection(drawio_version, images: List[Path]):
+    if drawio_version <= (20, 6, 2):
+        image_0 = (125, 65)
+        image_1 = (65, 65)
+        image_2 = (105, 95)
+        image_3 = (125, 215)
+        image_4 = (125, 125)
+    else:
+        image_0 = (124, 64)
+        image_1 = (64, 64)
+        image_2 = (104, 94)
+        image_3 = (124, 214)
+        image_4 = (124, 124)
+
     assert images[0].name == "layers.png"
     assert images[1].name == "layers1.png"
     assert images[2].name == "layers2.png"
     assert images[3].name == "layers3.png"
     assert images[4].name == "layers4.png"
-    assert get_image_size(images[0]) == (124, 64)
-    assert get_image_size(images[1]) == (64, 64)
-    assert get_image_size(images[2]) == (104, 94)
-    assert get_image_size(images[3]) == (124, 214)
-    assert get_image_size(images[4]) == (124, 124)
+    assert get_image_size(images[0]) == image_0
+    assert get_image_size(images[1]) == image_1
+    assert get_image_size(images[2]) == image_2
+    assert get_image_size(images[3]) == image_3
+    assert get_image_size(images[4]) == image_4
 
 
 @pytest.mark.sphinx("html", testroot="layer-not-exist")

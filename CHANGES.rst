@@ -4,7 +4,6 @@ sphinxcontrib-drawio Release History
 Unreleased
 ~~~~~~~~~~
 
-- Require drawio version 27.0.2 or later.
 - Fix *page-name* to *page-index* conversion for drawio versions 27.0.2 or
   later.
 
