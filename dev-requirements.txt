@@ -1,2 +1,2 @@
 beautifulsoup4==4.8.2
-pytest==7.1.3
+pytest==9.0.3
