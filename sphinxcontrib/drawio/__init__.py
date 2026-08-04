@@ -226,7 +226,8 @@ class DrawIOConverter(ImageConverter):
         elif page_index is None:
             page_index = 0
 
-        page_index = str(page_index)
+        # draw.io v27.0.2+ uses 1-based page indexing (was 0-based before)
+        page_index = str(page_index + 1)
 
         scale = str(
             options.get("export-scale", builder.config.drawio_default_export_scale)
